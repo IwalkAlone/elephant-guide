@@ -78,6 +78,16 @@ initialSlots archetypes cards =
         Dict.fromList pairsWithCounts
 
 
+slotValue : Model -> ( ID, ID ) -> Int
+slotValue model pair =
+    case Dict.get pair model.slots of
+        Nothing ->
+            Debug.crash "Accessed dictionary out of bounds"
+
+        Just value ->
+            value
+
+
 type Msg
     = AddArchetype
     | EditArchetype
@@ -101,7 +111,28 @@ update msg model =
 
 view : Model -> Html Msg
 view model =
-    text (toString (model.nextId + 1))
+    table []
+        (viewHeader model :: viewLines model)
+
+
+viewHeader : Model -> Html Msg
+viewHeader model =
+    tr [] (cell (text "") :: List.map (\( id, archetype ) -> cell (text archetype.name)) model.archetypes)
+
+
+viewLines : Model -> List (Html Msg)
+viewLines model =
+    List.map (viewLine model) model.cards
+
+
+viewLine : Model -> ( ID, Card ) -> Html Msg
+viewLine model ( id, card ) =
+    tr [] (cell (text card.name) :: List.map (\( archetypeId, archetype ) -> cell (text (toString (slotValue model ( archetypeId, id ))))) model.archetypes)
+
+
+cell : Html Msg -> Html Msg
+cell html =
+    td [] [ html ]
 
 
 subscriptions : Model -> Sub Msg
