@@ -127,12 +127,17 @@ viewLines model =
 
 viewLine : Model -> ( ID, Card ) -> Html Msg
 viewLine model ( id, card ) =
-    tr [] (cell (text card.name) :: List.map (\( archetypeId, archetype ) -> cell (text (toString (slotValue model ( archetypeId, id ))))) model.archetypes)
+    tr [] (cell (text card.name) :: List.map (\( archetypeId, archetype ) -> cell (slotInput (slotValue model ( archetypeId, id )))) model.archetypes)
 
 
 cell : Html Msg -> Html Msg
 cell html =
     td [] [ html ]
+
+
+slotInput : Int -> Html Msg
+slotInput currentValue =
+    input [ type' "number", value (toString currentValue) ] []
 
 
 subscriptions : Model -> Sub Msg
