@@ -1,63 +1,109 @@
+module Main exposing (..)
+
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.App as Html
-import Html.Events exposing ( onClick )
-
--- component import example
-import Components.Hello exposing ( hello )
+import Html.Events exposing (onClick)
+import Dict exposing (..)
 
 
--- APP
 main : Program Never
 main =
-  Html.beginnerProgram { model = model, view = view, update = update }
+    Html.programWithFlags { init = init, view = view, update = update, subscriptions = subscriptions }
 
 
--- MODEL
-type alias Model = Int
-
-model : number
-model = 0
+type alias ID =
+    Int
 
 
--- UPDATE
-type Msg = NoOp | Increment
+type alias Slot =
+    ( String, Int )
 
-update : Msg -> Model -> Model
+
+type alias Archetype =
+    { name : String
+    }
+
+
+type alias Card =
+    { name : String
+    }
+
+
+type alias Model =
+    { archetypes : List ( ID, Archetype )
+    , cards : List ( ID, Card )
+    , slots : Dict ( ID, ID ) Int
+    , nextId : ID
+    }
+
+
+initialArchetypes : List ( ID, Archetype )
+initialArchetypes =
+    [ ( 0, { name = "Infect" } ), ( 1, { name = "Affinity" } ), ( 2, { name = "Jund" } ) ]
+
+
+initialCards : List ( ID, Card )
+initialCards =
+    [ ( 3, { name = "Path to Exile" } ), ( 4, { name = "Mana Leak" } ), ( 5, { name = "Supreme Verdict" } ) ]
+
+
+initialModel : Model
+initialModel =
+    { archetypes = initialArchetypes
+    , cards = initialCards
+    , slots = initialSlots initialArchetypes initialCards
+    , nextId = 6
+    }
+
+
+initialSlots : List ( ID, Archetype ) -> List ( ID, Card ) -> Dict ( ID, ID ) Int
+initialSlots archetypes cards =
+    let
+        archetypeIds =
+            List.map fst archetypes
+
+        cardIds =
+            List.map fst cards
+
+        archetypePairs archetypeId =
+            List.foldr (\cardId listSoFar -> ( archetypeId, cardId ) :: listSoFar) [] cardIds
+
+        pairs =
+            List.foldr (\archetypeId listSoFar -> List.concat [ archetypePairs archetypeId, listSoFar ]) [] archetypeIds
+
+        pairsWithCounts =
+            List.map (\pair -> ( pair, 4 )) pairs
+    in
+        Dict.fromList pairsWithCounts
+
+
+type Msg
+    = AddArchetype
+    | EditArchetype
+    | CopyArchetype
+    | DeleteArchetype
+    | AddCard
+    | EditCard
+    | DeleteCard
+    | EditSlot
+
+
+init : Never -> ( Model, Cmd Msg )
+init flags =
+    ( initialModel, Cmd.none )
+
+
+update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
-  case msg of
-    NoOp -> model
-    Increment -> model + 1
+    ( model, Cmd.none )
 
 
--- VIEW
--- Html is defined as: elem [ attribs ][ children ]
--- CSS can be applied via class names or inline style attrib
 view : Model -> Html Msg
 view model =
-  div [ class "container", style [("margin-top", "30px"), ( "text-align", "center" )] ][    -- inline CSS (literal)
-    div [ class "row" ][
-      div [ class "col-xs-12" ][
-        div [ class "jumbotron" ][
-          img [ src "img/elm.jpg", style styles.img ] []                                    -- inline CSS (via var)
-          , hello model                                                                     -- ext 'hello' component (takes 'model' as arg)
-          , p [] [ text ( "Elm Webpack Starter" ) ]
-          , button [ class "btn btn-primary btn-lg", onClick Increment ] [                  -- click handler
-            span[ class "glyphicon glyphicon-star" ][]                                      -- glyphicon
-            , span[][ text "FTW!" ]
-          ]
-        ]
-      ]
-    ]
-  ]
+    text (toString (model.nextId + 1))
 
 
--- CSS STYLES
-styles : { img : List ( String, String ) }
-styles =
-  {
-    img =
-      [ ( "width", "33%" )
-      , ( "border", "4px solid #337AB7")
-      ]
-  }
+subscriptions : Model -> Sub Msg
+subscriptions model =
+    Sub.none
