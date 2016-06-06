@@ -117,6 +117,15 @@ update msg model =
             , Cmd.none
             )
 
+        AddCard ->
+            ( { model
+                | cards = model.cards ++ [ ( model.nextId, { name = "New Card" } ) ]
+                , slots = List.foldr (\archetypeId dict -> Dict.insert ( archetypeId, model.nextId ) 0 dict) model.slots (List.map fst model.archetypes)
+                , nextId = model.nextId + 1
+              }
+            , Cmd.none
+            )
+
         EditSlot slot newValue ->
             ( { model | slots = Dict.insert slot newValue model.slots }, Cmd.none )
 
@@ -127,7 +136,7 @@ update msg model =
 view : Model -> Html Msg
 view model =
     table []
-        (viewHeader model :: viewLines model)
+        ((viewHeader model :: viewLines model) ++ [ viewAddCard ])
 
 
 viewHeader : Model -> Html Msg
@@ -148,6 +157,11 @@ viewLine model ( id, card ) =
 viewAddArchetype : Html Msg
 viewAddArchetype =
     cell (button [ onClick AddArchetype ] [ text "+ Add Archetype" ])
+
+
+viewAddCard : Html Msg
+viewAddCard =
+    tr [] [ cell (button [ onClick AddCard ] [ text "+ Add Card" ]) ]
 
 
 cell : Html Msg -> Html Msg
