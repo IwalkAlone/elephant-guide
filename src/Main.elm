@@ -3,8 +3,9 @@ module Main exposing (..)
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.App as Html
-import Html.Events exposing (onClick)
+import Html.Events exposing (onInput)
 import Dict exposing (..)
+import String exposing (toInt)
 
 
 main : Program Never
@@ -96,7 +97,7 @@ type Msg
     | AddCard
     | EditCard
     | DeleteCard
-    | EditSlot
+    | EditSlot ( ID, ID ) Int
 
 
 init : Never -> ( Model, Cmd Msg )
@@ -106,7 +107,12 @@ init flags =
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
-    ( model, Cmd.none )
+    case msg of
+        EditSlot slot newValue ->
+            ( { model | slots = Dict.insert slot newValue model.slots }, Cmd.none )
+
+        _ ->
+            ( model, Cmd.none )
 
 
 view : Model -> Html Msg
@@ -127,7 +133,7 @@ viewLines model =
 
 viewLine : Model -> ( ID, Card ) -> Html Msg
 viewLine model ( id, card ) =
-    tr [] (cell (text card.name) :: List.map (\( archetypeId, archetype ) -> cell (slotInput (slotValue model ( archetypeId, id )))) model.archetypes)
+    tr [] (cell (text card.name) :: List.map (\( archetypeId, archetype ) -> cell (slotInput model ( archetypeId, id ))) model.archetypes)
 
 
 cell : Html Msg -> Html Msg
@@ -135,9 +141,14 @@ cell html =
     td [] [ html ]
 
 
-slotInput : Int -> Html Msg
-slotInput currentValue =
-    input [ type' "number", value (toString currentValue) ] []
+slotInput : Model -> ( ID, ID ) -> Html Msg
+slotInput model ( archetypeId, cardId ) =
+    input
+        [ type' "number"
+        , value (toString (slotValue model ( archetypeId, cardId )))
+        , onInput (\input -> EditSlot ( archetypeId, cardId ) (Result.withDefault 0 (String.toInt input)))
+        ]
+        []
 
 
 subscriptions : Model -> Sub Msg
