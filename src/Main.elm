@@ -6,6 +6,7 @@ import Html.App as Html
 import Html.Events exposing (onClick, onInput)
 import Dict exposing (..)
 import String exposing (toInt)
+import Components.Archetype as Archetype exposing (..)
 
 
 main : Program Never
@@ -21,27 +22,22 @@ type alias Slot =
     ( String, Int )
 
 
-type alias Archetype =
-    { name : String
-    }
-
-
 type alias Card =
     { name : String
     }
 
 
 type alias Model =
-    { archetypes : List ( ID, Archetype )
+    { archetypes : List ( ID, Archetype.Model )
     , cards : List ( ID, Card )
     , slots : Dict ( ID, ID ) Int
     , nextId : ID
     }
 
 
-initialArchetypes : List ( ID, Archetype )
+initialArchetypes : List ( ID, Archetype.Model )
 initialArchetypes =
-    [ ( 0, { name = "Infect" } ), ( 1, { name = "Affinity" } ), ( 2, { name = "Jund" } ) ]
+    [ ( 0, { name = "Infect", weight = 8 } ), ( 1, { name = "Affinity", weight = 5 } ), ( 2, { name = "Jund", weight = 7 } ) ]
 
 
 initialCards : List ( ID, Card )
@@ -58,7 +54,7 @@ initialModel =
     }
 
 
-initialSlots : List ( ID, Archetype ) -> List ( ID, Card ) -> Dict ( ID, ID ) Int
+initialSlots : List ( ID, Archetype.Model ) -> List ( ID, Card ) -> Dict ( ID, ID ) Int
 initialSlots archetypes cards =
     let
         archetypeIds =
@@ -91,13 +87,13 @@ slotValue model pair =
 
 type Msg
     = AddArchetype
-    | EditArchetype
     | CopyArchetype
     | DeleteArchetype
     | AddCard
     | EditCard
     | DeleteCard
     | EditSlot ( ID, ID ) Int
+    | ArchetypeMsg ID Archetype.Msg
 
 
 init : Never -> ( Model, Cmd Msg )
@@ -110,7 +106,7 @@ update msg model =
     case msg of
         AddArchetype ->
             ( { model
-                | archetypes = model.archetypes ++ [ ( model.nextId, { name = "New Archetype" } ) ]
+                | archetypes = model.archetypes ++ [ ( model.nextId, { name = "New Archetype", weight = 0 } ) ]
                 , slots = List.foldr (\cardId dict -> Dict.insert ( model.nextId, cardId ) 0 dict) model.slots (List.map fst model.cards)
                 , nextId = model.nextId + 1
               }
@@ -129,6 +125,16 @@ update msg model =
         EditSlot slot newValue ->
             ( { model | slots = Dict.insert slot newValue model.slots }, Cmd.none )
 
+        ArchetypeMsg id msg ->
+            let
+                updateArchetype ( archetypeId, archetype ) =
+                    if archetypeId == id then
+                        ( archetypeId, Archetype.update msg archetype )
+                    else
+                        ( archetypeId, archetype )
+            in
+                ( { model | archetypes = List.map updateArchetype model.archetypes }, Cmd.none )
+
         _ ->
             ( model, Cmd.none )
 
@@ -141,7 +147,7 @@ view model =
 
 viewHeader : Model -> Html Msg
 viewHeader model =
-    tr [] ((cell (text "") :: List.map (\( id, archetype ) -> cell (text archetype.name)) model.archetypes) ++ [ viewAddArchetype ])
+    tr [] (cell (text "") :: List.map viewArchetype model.archetypes ++ [ viewAddArchetype ])
 
 
 viewLines : Model -> List (Html Msg)
@@ -159,12 +165,17 @@ viewAddArchetype =
     cell (button [ onClick AddArchetype ] [ text "+ Add Archetype" ])
 
 
+viewArchetype : ( ID, Archetype.Model ) -> Html Msg
+viewArchetype ( id, model ) =
+    Html.map (ArchetypeMsg id) (cell (Archetype.view model))
+
+
 viewAddCard : Html Msg
 viewAddCard =
     tr [] [ cell (button [ onClick AddCard ] [ text "+ Add Card" ]) ]
 
 
-cell : Html Msg -> Html Msg
+cell : Html msg -> Html msg
 cell html =
     td [] [ html ]
 
