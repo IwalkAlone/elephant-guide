@@ -1,4 +1,5 @@
 table {
+
     td, input {
         font-size: 18px;
         text-align: center;
@@ -9,15 +10,32 @@ input {
     border: none;
 }
 
-.archetype {
-    text-align: left;
-    border-bottom: 1px dashed black;
-    input {
-        padding-left: 10px;
-        text-align: left;
+.archetype-cell {
+    position: relative;
 
-        &.archetype-weight {
-            width: 50px;
+    .archetype {
+        text-align: left;
+        border-bottom: 1px dashed black;
+        input {
+            padding-left: 10px;
+            text-align: left;
+
+            &.archetype-weight {
+                width: 50px;
+            }
+        }
+    }
+
+    .buttons-overlay {
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        top: 0;
+        text-align: right;
+        pointer-events: none;
+
+        button {
+            pointer-events: auto;
         }
     }
 }

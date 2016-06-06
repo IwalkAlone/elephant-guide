@@ -88,7 +88,7 @@ slotValue model pair =
 type Msg
     = AddArchetype
     | CopyArchetype
-    | DeleteArchetype
+    | DeleteArchetype ID
     | AddCard
     | EditCard
     | DeleteCard
@@ -109,6 +109,14 @@ update msg model =
                 | archetypes = model.archetypes ++ [ ( model.nextId, { name = "New Archetype", weight = 0 } ) ]
                 , slots = List.foldr (\cardId dict -> Dict.insert ( model.nextId, cardId ) 0 dict) model.slots (List.map fst model.cards)
                 , nextId = model.nextId + 1
+              }
+            , Cmd.none
+            )
+
+        DeleteArchetype id ->
+            ( { model
+                | archetypes = List.filter (\( archetypeId, archetype ) -> archetypeId /= id) model.archetypes
+                , slots = Dict.filter (\( archetypeId, _ ) _ -> archetypeId /= id) model.slots
               }
             , Cmd.none
             )
@@ -167,7 +175,12 @@ viewAddArchetype =
 
 viewArchetype : ( ID, Archetype.Model ) -> Html Msg
 viewArchetype ( id, model ) =
-    Html.map (ArchetypeMsg id) (cell (Archetype.view model))
+    (td [ class "archetype-cell" ] [ Html.map (ArchetypeMsg id) (Archetype.view model), div [ class "buttons-overlay" ] [ viewArchetypeButtons id ] ])
+
+
+viewArchetypeButtons : ID -> Html Msg
+viewArchetypeButtons id =
+    button [ onClick (DeleteArchetype id) ] [ text "Delete" ]
 
 
 viewAddCard : Html Msg
