@@ -3,7 +3,7 @@ module Main exposing (..)
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.App as Html
-import Html.Events exposing (onInput)
+import Html.Events exposing (onClick, onInput)
 import Dict exposing (..)
 import String exposing (toInt)
 
@@ -108,6 +108,15 @@ init flags =
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
+        AddArchetype ->
+            ( { model
+                | archetypes = model.archetypes ++ [ ( model.nextId, { name = "New Archetype" } ) ]
+                , slots = List.foldr (\cardId dict -> Dict.insert ( model.nextId, cardId ) 0 dict) model.slots (List.map fst model.cards)
+                , nextId = model.nextId + 1
+              }
+            , Cmd.none
+            )
+
         EditSlot slot newValue ->
             ( { model | slots = Dict.insert slot newValue model.slots }, Cmd.none )
 
@@ -123,7 +132,7 @@ view model =
 
 viewHeader : Model -> Html Msg
 viewHeader model =
-    tr [] (cell (text "") :: List.map (\( id, archetype ) -> cell (text archetype.name)) model.archetypes)
+    tr [] ((cell (text "") :: List.map (\( id, archetype ) -> cell (text archetype.name)) model.archetypes) ++ [ viewAddArchetype ])
 
 
 viewLines : Model -> List (Html Msg)
@@ -134,6 +143,11 @@ viewLines model =
 viewLine : Model -> ( ID, Card ) -> Html Msg
 viewLine model ( id, card ) =
     tr [] (cell (text card.name) :: List.map (\( archetypeId, archetype ) -> cell (slotInput model ( archetypeId, id ))) model.archetypes)
+
+
+viewAddArchetype : Html Msg
+viewAddArchetype =
+    cell (button [ onClick AddArchetype ] [ text "+ Add Archetype" ])
 
 
 cell : Html Msg -> Html Msg
