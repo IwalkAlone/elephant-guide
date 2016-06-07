@@ -7,6 +7,7 @@ import Html.Events exposing (onClick, onInput)
 import Dict exposing (..)
 import String exposing (toInt)
 import Components.Archetype as Archetype exposing (..)
+import Components.Card as Card exposing (..)
 
 
 main : Program Never
@@ -22,14 +23,9 @@ type alias Slot =
     ( String, Int )
 
 
-type alias Card =
-    { name : String
-    }
-
-
 type alias Model =
     { archetypes : List ( ID, Archetype.Model )
-    , cards : List ( ID, Card )
+    , cards : List ( ID, Card.Model )
     , slots : Dict ( ID, ID ) Int
     , nextId : ID
     }
@@ -40,7 +36,7 @@ initialArchetypes =
     [ ( 0, { name = "Infect", weight = 8 } ), ( 1, { name = "Affinity", weight = 5 } ), ( 2, { name = "Jund", weight = 7 } ) ]
 
 
-initialCards : List ( ID, Card )
+initialCards : List ( ID, Card.Model )
 initialCards =
     [ ( 3, { name = "Path to Exile" } ), ( 4, { name = "Mana Leak" } ), ( 5, { name = "Supreme Verdict" } ) ]
 
@@ -54,7 +50,7 @@ initialModel =
     }
 
 
-initialSlots : List ( ID, Archetype.Model ) -> List ( ID, Card ) -> Dict ( ID, ID ) Int
+initialSlots : List ( ID, Archetype.Model ) -> List ( ID, Card.Model ) -> Dict ( ID, ID ) Int
 initialSlots archetypes cards =
     let
         archetypeIds =
@@ -94,6 +90,7 @@ type Msg
     | DeleteCard
     | EditSlot ( ID, ID ) Int
     | ArchetypeMsg ID Archetype.Msg
+    | CardMsg ID Card.Msg
 
 
 init : Never -> ( Model, Cmd Msg )
@@ -143,6 +140,16 @@ update msg model =
             in
                 ( { model | archetypes = List.map updateArchetype model.archetypes }, Cmd.none )
 
+        CardMsg id msg ->
+            let
+                updateCard ( cardId, card ) =
+                    if cardId == id then
+                        ( cardId, Card.update msg card )
+                    else
+                        ( cardId, card )
+            in
+                ( { model | cards = List.map updateCard model.cards }, Cmd.none )
+
         _ ->
             ( model, Cmd.none )
 
@@ -163,9 +170,14 @@ viewLines model =
     List.map (viewLine model) model.cards
 
 
-viewLine : Model -> ( ID, Card ) -> Html Msg
+viewLine : Model -> ( ID, Card.Model ) -> Html Msg
 viewLine model ( id, card ) =
-    tr [] (cell (text card.name) :: List.map (\( archetypeId, archetype ) -> cell (slotInput model ( archetypeId, id ))) model.archetypes)
+    tr [] (viewCard ( id, card ) :: List.map (\( archetypeId, archetype ) -> cell (slotInput model ( archetypeId, id ))) model.archetypes)
+
+
+viewCard : ( ID, Card.Model ) -> Html Msg
+viewCard ( id, model ) =
+    (td [ class "card-cell" ] [ Html.map (CardMsg id) (Card.view model) ])
 
 
 viewAddArchetype : Html Msg
