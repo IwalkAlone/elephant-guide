@@ -12,6 +12,8 @@ type alias SavedDeckModel =
     { archetypes : List ( ID, Archetype.Model )
     , cards : List ( ID, Card.Model )
     , slots : List ( ( ID, ID ), Int )
+    , maindeck : List ( ID, Int )
+    , sideboard : List ( ID, Int )
     , nextId : ID
     }
 

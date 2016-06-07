@@ -27,6 +27,8 @@ type alias Slot =
 type alias Model =
     { archetypes : List ( ID, Archetype.Model )
     , cards : List ( ID, Card.Model )
+    , maindeck : Dict ID Int
+    , sideboard : Dict ID Int
     , slots : Dict ( ID, ID ) Int
     , nextId : ID
     }
@@ -57,32 +59,35 @@ initialCards =
 
 initialModel : Model
 initialModel =
-    { archetypes = initialArchetypes
-    , cards = initialCards
-    , slots = initialSlots initialArchetypes initialCards
+    { archetypes = []
+    , cards = []
+    , slots = Dict.empty
+    , maindeck = Dict.empty
+    , sideboard = Dict.empty
     , nextId = 6
     }
 
 
-initialSlots : List ( ID, Archetype.Model ) -> List ( ID, Card.Model ) -> Dict ( ID, ID ) Int
-initialSlots archetypes cards =
-    let
-        archetypeIds =
-            List.map fst archetypes
 
-        cardIds =
-            List.map fst cards
-
-        archetypePairs archetypeId =
-            List.foldr (\cardId listSoFar -> ( archetypeId, cardId ) :: listSoFar) [] cardIds
-
-        pairs =
-            List.foldr (\archetypeId listSoFar -> List.concat [ archetypePairs archetypeId, listSoFar ]) [] archetypeIds
-
-        pairsWithCounts =
-            List.map (\pair -> ( pair, 4 )) pairs
-    in
-        Dict.fromList pairsWithCounts
+-- initialSlots : List ( ID, Archetype.Model ) -> List ( ID, Card.Model ) -> Dict ( ID, ID ) Int
+-- initialSlots archetypes cards =
+--     let
+--         archetypeIds =
+--             List.map fst archetypes
+--
+--         cardIds =
+--             List.map fst cards
+--
+--         archetypePairs archetypeId =
+--             List.foldr (\cardId listSoFar -> ( archetypeId, cardId ) :: listSoFar) [] cardIds
+--
+--         pairs =
+--             List.foldr (\archetypeId listSoFar -> List.concat [ archetypePairs archetypeId, listSoFar ]) [] archetypeIds
+--
+--         pairsWithCounts =
+--             List.map (\pair -> ( pair, 4 )) pairs
+--     in
+--         Dict.fromList pairsWithCounts
 
 
 slotValue : Model -> ( ID, ID ) -> Int
@@ -107,6 +112,8 @@ update msg model =
             ( { archetypes = savedDeck.archetypes
               , cards = savedDeck.cards
               , slots = Dict.fromList savedDeck.slots
+              , maindeck = Dict.fromList savedDeck.maindeck
+              , sideboard = Dict.fromList savedDeck.sideboard
               , nextId = savedDeck.nextId
               }
             , Cmd.none
@@ -189,7 +196,7 @@ view model =
 
 viewHeader : Model -> Html Msg
 viewHeader model =
-    tr [] (cell (text "") :: List.map (viewArchetype model) model.archetypes ++ [ viewAddArchetype ])
+    tr [] (td [ class "card-cell" ] [] :: List.map (viewArchetype model) model.archetypes ++ [ viewAddArchetype ])
 
 
 viewLines : Model -> List (Html Msg)
@@ -250,12 +257,21 @@ cell html =
 
 slotInput : Model -> ( ID, ID ) -> Html Msg
 slotInput model ( archetypeId, cardId ) =
-    input
-        [ type' "number"
-        , value (toString (slotValue model ( archetypeId, cardId )))
-        , onInput (\input -> EditSlot ( archetypeId, cardId ) (Result.withDefault 0 (String.toInt input)))
-        ]
-        []
+    let
+        viewValue =
+            case slotValue model ( archetypeId, cardId ) of
+                0 ->
+                    ""
+
+                value ->
+                    toString value
+    in
+        input
+            [ type' "number"
+            , value viewValue
+            , onInput (\input -> EditSlot ( archetypeId, cardId ) (Result.withDefault 0 (String.toInt input)))
+            ]
+            []
 
 
 saveDeck : Model -> Cmd msg
@@ -266,6 +282,8 @@ saveDeck model =
             , cards = model.cards
             , slots = Dict.toList model.slots
             , nextId = model.nextId
+            , maindeck = Dict.toList model.maindeck
+            , sideboard = Dict.toList model.sideboard
             }
     in
         Ports.saveDeck saveDeckModel

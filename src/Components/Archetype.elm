@@ -27,21 +27,6 @@ update msg model =
             { model | weight = newWeight }
 
 
-view : Model -> Html Msg
-view model =
-    div [ class "archetype" ]
-        [ input [ class "archetype-name", type' "text", value model.name, onInput EditName ] []
-        , hr [] []
-        , input
-            [ class "archetype-weight"
-            , type' "number"
-            , value (toString model.weight)
-            , onInput (\input -> EditWeight (Result.withDefault 0 (String.toFloat input)))
-            ]
-            []
-        ]
-
-
 viewName : Model -> Html Msg
 viewName model =
     input [ class "archetype-name", type' "text", value model.name, onInput EditName ] []
