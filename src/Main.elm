@@ -189,7 +189,7 @@ view model =
 
 viewHeader : Model -> Html Msg
 viewHeader model =
-    tr [] (cell (text "") :: List.map viewArchetype model.archetypes ++ [ viewAddArchetype ])
+    tr [] (cell (text "") :: List.map (viewArchetype model) model.archetypes ++ [ viewAddArchetype ])
 
 
 viewLines : Model -> List (Html Msg)
@@ -212,14 +212,30 @@ viewAddArchetype =
     cell (button [ onClick AddArchetype ] [ text "+ Add Archetype" ])
 
 
-viewArchetype : ( ID, Archetype.Model ) -> Html Msg
-viewArchetype ( id, model ) =
-    (td [ class "archetype-cell" ] [ Html.map (ArchetypeMsg id) (Archetype.view model), div [ class "buttons-overlay" ] [ viewArchetypeButtons id ] ])
+viewArchetype : Model -> ( ID, Archetype.Model ) -> Html Msg
+viewArchetype model ( id, archetype ) =
+    (td [ class "archetype-cell" ]
+        [ div [] [ Html.map (ArchetypeMsg id) (Archetype.viewName archetype) ]
+        , div [] [ Html.map (ArchetypeMsg id) (Archetype.viewWeight archetype), viewCardCount id model ]
+        ]
+    )
 
 
 viewArchetypeButtons : ID -> Html Msg
 viewArchetypeButtons id =
     button [ onClick (DeleteArchetype id) ] [ text "Delete" ]
+
+
+viewCardCount : ID -> Model -> Html Msg
+viewCardCount archetypeId model =
+    let
+        count =
+            model.slots
+                |> Dict.filter (\( archetypeIdInDict, _ ) _ -> archetypeId == archetypeIdInDict)
+                |> values
+                |> List.sum
+    in
+        span [ classList [ ( "invalid-count", count /= 60 ) ] ] [ text (toString count ++ "/60") ]
 
 
 viewAddCard : Html Msg

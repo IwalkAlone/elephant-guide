@@ -1,41 +1,51 @@
 table {
-
-    td, input {
+    border: 1px solid black;
+    border-collapse: collapse;
+    td {
+        border: 1px solid black;
+    }
+    input,
+    td {
+        width: 80px;
         font-size: 18px;
         text-align: center;
     }
 }
-
 input {
     border: none;
 }
-
-.archetype-cell {
-    position: relative;
-
-    .archetype {
+.card-cell {
+    width: 160px;
+    input {
         text-align: left;
+        width: 100%;
+    }
+}
+.archetype-cell {
+    width: 80px;
+    text-align: left;
+    font-size: 12px;
+    input {
+        font-size: 12px;
+        width: 100%;
+        text-align: left;
+        &.archetype-weight {
+            width: 30px;
+        }
+    }
+    .archetype {
         border-bottom: 1px dashed black;
         input {
             padding-left: 10px;
             text-align: left;
-
-            &.archetype-weight {
-                width: 50px;
-            }
+        }
+    }
+    span {
+        color: green;
+        font-weight: bold;
+        &.invalid-count {
+            color: red;
         }
     }
 
-    .buttons-overlay {
-        position: absolute;
-        width: 100%;
-        height: 100%;
-        top: 0;
-        text-align: right;
-        pointer-events: none;
-
-        button {
-            pointer-events: auto;
-        }
-    }
 }

@@ -40,3 +40,19 @@ view model =
             ]
             []
         ]
+
+
+viewName : Model -> Html Msg
+viewName model =
+    input [ class "archetype-name", type' "text", value model.name, onInput EditName ] []
+
+
+viewWeight : Model -> Html Msg
+viewWeight model =
+    input
+        [ class "archetype-weight"
+        , type' "number"
+        , value (toString model.weight)
+        , onInput (\input -> EditWeight (Result.withDefault 0 (String.toFloat input)))
+        ]
+        []
