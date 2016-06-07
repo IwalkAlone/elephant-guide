@@ -8,6 +8,7 @@ import Dict exposing (..)
 import String exposing (toInt)
 import Components.Archetype as Archetype exposing (..)
 import Components.Card as Card exposing (..)
+import Ports exposing (..)
 
 
 main : Program Never
@@ -29,6 +30,19 @@ type alias Model =
     , slots : Dict ( ID, ID ) Int
     , nextId : ID
     }
+
+
+type Msg
+    = LoadDeck SavedDeckModel
+    | AddArchetype
+    | CopyArchetype
+    | DeleteArchetype ID
+    | AddCard
+    | EditCard
+    | DeleteCard
+    | EditSlot ( ID, ID ) Int
+    | ArchetypeMsg ID Archetype.Msg
+    | CardMsg ID Card.Msg
 
 
 initialArchetypes : List ( ID, Archetype.Model )
@@ -81,18 +95,6 @@ slotValue model pair =
             value
 
 
-type Msg
-    = AddArchetype
-    | CopyArchetype
-    | DeleteArchetype ID
-    | AddCard
-    | EditCard
-    | DeleteCard
-    | EditSlot ( ID, ID ) Int
-    | ArchetypeMsg ID Archetype.Msg
-    | CardMsg ID Card.Msg
-
-
 init : Never -> ( Model, Cmd Msg )
 init flags =
     ( initialModel, Cmd.none )
@@ -101,34 +103,53 @@ init flags =
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
-        AddArchetype ->
-            ( { model
-                | archetypes = model.archetypes ++ [ ( model.nextId, { name = "New Archetype", weight = 0 } ) ]
-                , slots = List.foldr (\cardId dict -> Dict.insert ( model.nextId, cardId ) 0 dict) model.slots (List.map fst model.cards)
-                , nextId = model.nextId + 1
+        LoadDeck savedDeck ->
+            ( { archetypes = savedDeck.archetypes
+              , cards = savedDeck.cards
+              , slots = Dict.fromList savedDeck.slots
+              , nextId = savedDeck.nextId
               }
             , Cmd.none
             )
+
+        AddArchetype ->
+            let
+                newModel =
+                    { model
+                        | archetypes = model.archetypes ++ [ ( model.nextId, { name = "New Archetype", weight = 0 } ) ]
+                        , slots = List.foldr (\cardId dict -> Dict.insert ( model.nextId, cardId ) 0 dict) model.slots (List.map fst model.cards)
+                        , nextId = model.nextId + 1
+                    }
+            in
+                ( newModel, saveDeck newModel )
 
         DeleteArchetype id ->
-            ( { model
-                | archetypes = List.filter (\( archetypeId, archetype ) -> archetypeId /= id) model.archetypes
-                , slots = Dict.filter (\( archetypeId, _ ) _ -> archetypeId /= id) model.slots
-              }
-            , Cmd.none
-            )
+            let
+                newModel =
+                    { model
+                        | archetypes = List.filter (\( archetypeId, archetype ) -> archetypeId /= id) model.archetypes
+                        , slots = Dict.filter (\( archetypeId, _ ) _ -> archetypeId /= id) model.slots
+                    }
+            in
+                ( newModel, saveDeck newModel )
 
         AddCard ->
-            ( { model
-                | cards = model.cards ++ [ ( model.nextId, { name = "New Card" } ) ]
-                , slots = List.foldr (\archetypeId dict -> Dict.insert ( archetypeId, model.nextId ) 0 dict) model.slots (List.map fst model.archetypes)
-                , nextId = model.nextId + 1
-              }
-            , Cmd.none
-            )
+            let
+                newModel =
+                    { model
+                        | cards = model.cards ++ [ ( model.nextId, { name = "New Card" } ) ]
+                        , slots = List.foldr (\archetypeId dict -> Dict.insert ( archetypeId, model.nextId ) 0 dict) model.slots (List.map fst model.archetypes)
+                        , nextId = model.nextId + 1
+                    }
+            in
+                ( newModel, saveDeck newModel )
 
         EditSlot slot newValue ->
-            ( { model | slots = Dict.insert slot newValue model.slots }, Cmd.none )
+            let
+                newModel =
+                    { model | slots = Dict.insert slot newValue model.slots }
+            in
+                ( newModel, saveDeck newModel )
 
         ArchetypeMsg id msg ->
             let
@@ -137,8 +158,11 @@ update msg model =
                         ( archetypeId, Archetype.update msg archetype )
                     else
                         ( archetypeId, archetype )
+
+                newModel =
+                    { model | archetypes = List.map updateArchetype model.archetypes }
             in
-                ( { model | archetypes = List.map updateArchetype model.archetypes }, Cmd.none )
+                ( newModel, saveDeck newModel )
 
         CardMsg id msg ->
             let
@@ -147,8 +171,11 @@ update msg model =
                         ( cardId, Card.update msg card )
                     else
                         ( cardId, card )
+
+                newModel =
+                    { model | cards = List.map updateCard model.cards }
             in
-                ( { model | cards = List.map updateCard model.cards }, Cmd.none )
+                ( newModel, saveDeck newModel )
 
         _ ->
             ( model, Cmd.none )
@@ -215,6 +242,19 @@ slotInput model ( archetypeId, cardId ) =
         []
 
 
+saveDeck : Model -> Cmd msg
+saveDeck model =
+    let
+        saveDeckModel =
+            { archetypes = model.archetypes
+            , cards = model.cards
+            , slots = Dict.toList model.slots
+            , nextId = model.nextId
+            }
+    in
+        Ports.saveDeck saveDeckModel
+
+
 subscriptions : Model -> Sub Msg
 subscriptions model =
-    Sub.none
+    Ports.loadDeck LoadDeck
