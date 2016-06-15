@@ -195,7 +195,13 @@ view model =
 
 viewHeader : Model -> Html Msg
 viewHeader model =
-    tr [] (td [ class "card-cell" ] [] :: td [ class "archetype-cell" ] [ text "Main" ] :: td [ class "archetype-cell" ] [ text "Side" ] :: List.map (viewArchetype model) model.archetypes ++ [ viewAddArchetype ])
+    tr []
+        (td [ class "card-cell" ] []
+            :: viewDecklistHeader model.maindeck "Main" 60
+            :: viewDecklistHeader model.sideboard "Side" 15
+            :: List.map (viewArchetype model) model.archetypes
+            ++ [ viewAddArchetype ]
+        )
 
 
 viewLines : Model -> List (Html Msg)
@@ -219,10 +225,6 @@ viewCard ( id, model ) =
     (td [ class "card-cell" ] [ Html.map (CardMsg id) (Card.view model) ])
 
 
-viewDecklistSlot list ( id, model ) =
-    []
-
-
 viewAddArchetype : Html Msg
 viewAddArchetype =
     cell (button [ onClick AddArchetype ] [ text "+ Add Archetype" ])
@@ -232,8 +234,15 @@ viewArchetype : Model -> ( ID, Archetype.Model ) -> Html Msg
 viewArchetype model ( id, archetype ) =
     (td [ class "archetype-cell" ]
         [ div [] [ Html.map (ArchetypeMsg id) (Archetype.viewName archetype) ]
-        , div [] [ Html.map (ArchetypeMsg id) (Archetype.viewWeight archetype), viewCardCount (Decklist.cardCount archetype.decklist) ]
+        , div [] [ Html.map (ArchetypeMsg id) (Archetype.viewWeight archetype), viewCardCount (Decklist.cardCount archetype.decklist) 60 ]
         ]
+    )
+
+
+viewDecklistHeader : Decklist -> String -> Int -> Html Msg
+viewDecklistHeader decklist name targetCount =
+    (td [ class "archetype-cell" ]
+        [ div [] [ text name ], div [] [ viewCardCount (Decklist.cardCount decklist) targetCount ] ]
     )
 
 
@@ -242,9 +251,9 @@ viewArchetypeButtons id =
     button [ onClick (DeleteArchetype id) ] [ text "Delete" ]
 
 
-viewCardCount : Int -> Html Msg
-viewCardCount count =
-    span [ classList [ ( "invalid-count", count /= 60 ) ] ] [ text (toString count ++ "/60") ]
+viewCardCount : Int -> Int -> Html Msg
+viewCardCount count targetCount =
+    span [ classList [ ( "invalid-count", count /= targetCount ) ] ] [ text (toString count ++ "/" ++ toString targetCount) ]
 
 
 viewAddCard : Html Msg
