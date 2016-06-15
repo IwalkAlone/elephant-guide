@@ -4,11 +4,13 @@ import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (..)
 import String exposing (toFloat)
+import Components.Decklist exposing (..)
 
 
 type alias Model =
     { name : String
     , weight : Float
+    , decklist : Decklist
     }
 
 
