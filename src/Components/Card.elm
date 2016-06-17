@@ -6,7 +6,8 @@ import Html.Events exposing (..)
 
 
 type alias Model =
-    { name : String
+    { id : Int
+    , name : String
     }
 
 

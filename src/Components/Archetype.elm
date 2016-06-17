@@ -8,7 +8,8 @@ import Components.Decklist exposing (..)
 
 
 type alias Model =
-    { name : String
+    { id : Int
+    , name : String
     , weight : Float
     , decklist : Decklist
     }

@@ -47,5 +47,18 @@ input {
             color: red;
         }
     }
+}
+.maindeck-sideboard-cell {
+    input {
+        width: 50px;
+    }
 
+    hr {
+        margin: 2px;
+    }
+
+    .maindeck-sideboard-estimated {
+        display: inline-block;
+        font-size: 10px;
+    }
 }

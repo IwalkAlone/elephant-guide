@@ -10,6 +10,7 @@ import Components.Archetype as Archetype exposing (..)
 import Components.Card as Card exposing (..)
 import Components.Decklist as Decklist exposing (..)
 import Ports exposing (..)
+import ToFixed exposing (..)
 
 
 main : Program Never
@@ -26,8 +27,8 @@ type alias Slot =
 
 
 type alias Model =
-    { archetypes : List ( ID, Archetype.Model )
-    , cards : List ( ID, Card.Model )
+    { archetypes : List Archetype.Model
+    , cards : List Card.Model
     , maindeck : Decklist
     , sideboard : Decklist
     , nextId : ID
@@ -92,13 +93,12 @@ update msg model =
     case msg of
         LoadDeck savedDeck ->
             let
-                loadArchetype ( id, savedArchetype ) =
-                    ( id
-                    , { name = savedArchetype.name
-                      , weight = savedArchetype.weight
-                      , decklist = Dict.fromList savedArchetype.decklist
-                      }
-                    )
+                loadArchetype savedArchetype =
+                    { id = savedArchetype.id
+                    , name = savedArchetype.name
+                    , weight = savedArchetype.weight
+                    , decklist = Dict.fromList savedArchetype.decklist
+                    }
             in
                 ( { archetypes = List.map loadArchetype savedDeck.archetypes
                   , cards = savedDeck.cards
@@ -113,7 +113,7 @@ update msg model =
             let
                 newModel =
                     { model
-                        | archetypes = model.archetypes ++ [ ( model.nextId, { name = "New Archetype", weight = 0, decklist = Dict.empty } ) ]
+                        | archetypes = model.archetypes ++ [ { id = model.nextId, name = "New Archetype", weight = 0, decklist = Dict.empty } ]
                         , nextId = model.nextId + 1
                     }
             in
@@ -123,7 +123,7 @@ update msg model =
             let
                 newModel =
                     { model
-                        | archetypes = List.filter (\( archetypeId, archetype ) -> archetypeId /= id) model.archetypes
+                        | archetypes = List.filter (\archetype -> archetype.id /= id) model.archetypes
                     }
             in
                 ( newModel, saveDeck newModel )
@@ -132,7 +132,7 @@ update msg model =
             let
                 newModel =
                     { model
-                        | cards = model.cards ++ [ ( model.nextId, { name = "New Card" } ) ]
+                        | cards = model.cards ++ [ { id = model.nextId, name = "New Card" } ]
                         , nextId = model.nextId + 1
                     }
             in
@@ -144,11 +144,11 @@ update msg model =
                     case decklistKind of
                         ArchetypeList archetypeId ->
                             let
-                                updateArchetype ( id, archetype ) =
-                                    if archetypeId == id then
-                                        ( id, { archetype | decklist = Dict.insert cardId newValue archetype.decklist } )
+                                updateArchetype archetype =
+                                    if archetype.id == archetypeId then
+                                        { archetype | decklist = Dict.insert cardId newValue archetype.decklist }
                                     else
-                                        ( id, archetype )
+                                        archetype
                             in
                                 { model | archetypes = List.map updateArchetype model.archetypes }
 
@@ -162,11 +162,11 @@ update msg model =
 
         ArchetypeMsg id msg ->
             let
-                updateArchetype ( archetypeId, archetype ) =
-                    if archetypeId == id then
-                        ( archetypeId, Archetype.update msg archetype )
+                updateArchetype archetype =
+                    if archetype.id == id then
+                        Archetype.update msg archetype
                     else
-                        ( archetypeId, archetype )
+                        archetype
 
                 newModel =
                     { model | archetypes = List.map updateArchetype model.archetypes }
@@ -175,11 +175,11 @@ update msg model =
 
         CardMsg id msg ->
             let
-                updateCard ( cardId, card ) =
-                    if cardId == id then
-                        ( cardId, Card.update msg card )
+                updateCard card =
+                    if card.id == id then
+                        Card.update msg card
                     else
-                        ( cardId, card )
+                        card
 
                 newModel =
                     { model | cards = List.map updateCard model.cards }
@@ -209,20 +209,58 @@ viewLines model =
     List.map (viewLine model) model.cards
 
 
-viewLine : Model -> ( ID, Card.Model ) -> Html Msg
-viewLine model ( id, card ) =
+viewLine : Model -> Card.Model -> Html Msg
+viewLine model card =
     tr []
-        (viewCard ( id, card )
-            :: cell (slotInput (Decklist.slotValue model.maindeck id) (EditSlot Maindeck id))
-            :: cell (slotInput (Decklist.slotValue model.sideboard id) (EditSlot Sideboard id))
-            :: List.map (\( archetypeId, archetype ) -> cell (slotInput (Decklist.slotValue archetype.decklist id) (EditSlot (ArchetypeList archetypeId) id)))
+        (viewCard card
+            :: viewMaindeckSideboard model card.id
+            :: List.map (\archetype -> cell (slotInput (Decklist.slotValue archetype.decklist card.id) (EditSlot (ArchetypeList archetype.id) card.id)))
                 model.archetypes
         )
 
 
-viewCard : ( ID, Card.Model ) -> Html Msg
-viewCard ( id, model ) =
-    (td [ class "card-cell" ] [ Html.map (CardMsg id) (Card.view model) ])
+viewMaindeckSideboard : Model -> ID -> Html Msg
+viewMaindeckSideboard model cardId =
+    td [ class "maindeck-sideboard-cell", colspan 2 ]
+        [ slotInput (Decklist.slotValue model.maindeck cardId) (EditSlot Maindeck cardId)
+        , div [ class "maindeck-sideboard-estimated" ]
+            [ div [] [ text (recommendedMaindeckCountOfCard model cardId |> toFixed 2) ]
+            , hr [] []
+            , div [] [ text (toString (maxCountOfCard model cardId)) ]
+            ]
+        , slotInput (Decklist.slotValue model.sideboard cardId) (EditSlot Sideboard cardId)
+        ]
+
+
+recommendedMaindeckCountOfCard : Model -> ID -> Float
+recommendedMaindeckCountOfCard model cardId =
+    let
+        weightedCounts =
+            List.map (\archetype -> (toFloat (Decklist.slotValue archetype.decklist cardId) * archetype.weight)) model.archetypes
+
+        totalWeight =
+            model.archetypes
+                |> List.map .weight
+                |> List.sum
+    in
+        if totalWeight == 0 then
+            0
+        else
+            (List.sum weightedCounts) / totalWeight
+
+
+maxCountOfCard : Model -> ID -> Int
+maxCountOfCard model cardId =
+    let
+        counts =
+            List.map (\archetype -> Decklist.slotValue archetype.decklist cardId) model.archetypes
+    in
+        Maybe.withDefault 0 (List.maximum counts)
+
+
+viewCard : Card.Model -> Html Msg
+viewCard model =
+    (td [ class "card-cell" ] [ Html.map (CardMsg model.id) (Card.view model) ])
 
 
 viewAddArchetype : Html Msg
@@ -230,11 +268,11 @@ viewAddArchetype =
     cell (button [ onClick AddArchetype ] [ text "+ Add Archetype" ])
 
 
-viewArchetype : Model -> ( ID, Archetype.Model ) -> Html Msg
-viewArchetype model ( id, archetype ) =
+viewArchetype : Model -> Archetype.Model -> Html Msg
+viewArchetype model archetype =
     (td [ class "archetype-cell" ]
-        [ div [] [ Html.map (ArchetypeMsg id) (Archetype.viewName archetype) ]
-        , div [] [ Html.map (ArchetypeMsg id) (Archetype.viewWeight archetype), viewCardCount (Decklist.cardCount archetype.decklist) 60 ]
+        [ div [] [ Html.map (ArchetypeMsg archetype.id) (Archetype.viewName archetype) ]
+        , div [] [ Html.map (ArchetypeMsg archetype.id) (Archetype.viewWeight archetype), viewCardCount (Decklist.cardCount archetype.decklist) 60 ]
         ]
     )
 
@@ -288,13 +326,12 @@ slotInput currentValue saveCountMsg =
 saveDeck : Model -> Cmd msg
 saveDeck model =
     let
-        saveArchetype ( id, archetype ) =
-            ( id
-            , { weight = archetype.weight
-              , name = archetype.name
-              , decklist = Dict.toList archetype.decklist
-              }
-            )
+        saveArchetype archetype =
+            { id = archetype.id
+            , weight = archetype.weight
+            , name = archetype.name
+            , decklist = Dict.toList archetype.decklist
+            }
 
         saveDeckModel =
             { archetypes = List.map saveArchetype model.archetypes

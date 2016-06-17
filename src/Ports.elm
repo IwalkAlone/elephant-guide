@@ -8,8 +8,8 @@ type alias ID =
 
 
 type alias SavedDeckModel =
-    { archetypes : List ( ID, SavedArchetypeModel )
-    , cards : List ( ID, Card.Model )
+    { archetypes : List SavedArchetypeModel
+    , cards : List Card.Model
     , maindeck : List ( ID, Int )
     , sideboard : List ( ID, Int )
     , nextId : ID
@@ -17,7 +17,8 @@ type alias SavedDeckModel =
 
 
 type alias SavedArchetypeModel =
-    { name : String
+    { id : Int
+    , name : String
     , weight : Float
     , decklist : List ( ID, Int )
     }
