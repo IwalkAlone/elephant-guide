@@ -9,24 +9,37 @@ import Json.Encode as JE exposing (..)
 type alias Model =
     { id : Int
     , name : String
+    , editing : Bool
+    , currentText : String
     }
 
 
 type Msg
-    = EditName String
+    = StartEditing
+    | Input String
+    | FinishEditing
 
 
 update : Msg -> Model -> Model
 update msg model =
     case msg of
-        EditName newName ->
-            { model | name = newName }
+        StartEditing ->
+            { model | editing = True }
+
+        Input input ->
+            { model | currentText = input }
+
+        FinishEditing ->
+            { model | name = model.currentText, editing = False }
 
 
 view : Model -> Html Msg
 view model =
     div [ class "card" ]
-        [ input [ class "card-name", type' "text", value model.name, onInput EditName ] []
+        [ if model.editing then
+            input [ class "card-name", type' "text", defaultValue model.name, onInput Input, onBlur FinishEditing ] []
+          else
+            span [ class "card-name", onDoubleClick StartEditing ] [ text model.name ]
         ]
 
 

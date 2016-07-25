@@ -5,6 +5,7 @@ import Components.Archetype as Archetype
 import Components.Card as Card
 import ID exposing (..)
 import Dict
+import DOM exposing (Rectangle)
 
 
 type DecklistKind
@@ -18,6 +19,7 @@ type Msg
     | DeleteArchetype ID
     | AddCard
     | EditSlot DecklistKind ID Int
+    | DragStart ID Rectangle
     | ArchetypeMsg ID Archetype.Msg
     | CardMsg ID Card.Msg
 
@@ -38,7 +40,7 @@ update msg model =
 
         AddCard ->
             { model
-                | cards = model.cards ++ [ { id = model.nextId, name = "New Card" } ]
+                | cards = model.cards ++ [ { id = model.nextId, name = "New Card", editing = False, currentText = "New Card" } ]
                 , nextId = model.nextId + 1
             }
 
@@ -79,3 +81,10 @@ update msg model =
                         card
             in
                 { model | cards = List.map updateCard model.cards }
+
+        DragStart id rect ->
+            let
+                debug =
+                    Debug.log "id, rect" ( id, rect )
+            in
+                model

@@ -12,6 +12,8 @@ import Html.Attributes exposing (..)
 import Html.Events exposing (..)
 import String
 import ToFixed exposing (toFixed)
+import DOM exposing (target, Rectangle, boundingClientRect)
+import Json.Decode as JD
 
 
 view : Model -> Html Msg
@@ -95,7 +97,7 @@ maxCountOfCard model cardId =
 
 viewCard : Card.Model -> Html Msg
 viewCard model =
-    (td [ class "card-cell" ] [ Html.map (CardMsg model.id) (Card.view model) ])
+    (td [ class "card-cell", on "mousedown" (JD.map (DragStart model.id) (DOM.target boundingClientRect)) ] [ Html.map (CardMsg model.id) (Card.view model) ])
 
 
 viewAddArchetype : Html Msg
