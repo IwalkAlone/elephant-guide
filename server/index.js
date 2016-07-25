@@ -2,6 +2,7 @@ var express = require ('express')
 var app = express()
 var FS = require('q-io/fs')
 var _ = require('lodash')
+var bodyParser = require('body-parser')
 
 var cards = [];
 FS.read('./server/AllCards.json').then(function (data) {
@@ -14,6 +15,8 @@ FS.read('./server/AllCards.json').then(function (data) {
     console.log(error);
 });
 
+app.use(bodyParser.json({type: () => true})); // for parsing application/json
+
 
 app.get('/cards', (req, res) => {
     if (!req.query.name) {
@@ -24,6 +27,12 @@ app.get('/cards', (req, res) => {
         return name.toLowerCase().indexOf(req.query.name.toLowerCase()) === 0;
     }).take(5);
     res.send(result);
+})
+
+app.post('/save', (req, res) => {
+    console.log(req.body);
+    FS.write('deck.json', JSON.stringify(req.body));
+    res.send();
 })
 
 console.log('Listening on :3000')

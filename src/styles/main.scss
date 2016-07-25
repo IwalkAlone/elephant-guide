@@ -43,8 +43,11 @@ input {
     span {
         color: green;
         font-weight: bold;
-        &.invalid-count {
+        &.count-over {
             color: red;
+        }
+        &.count-under {
+            color: blue;
         }
     }
 }

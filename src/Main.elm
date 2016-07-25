@@ -9,6 +9,15 @@ import String exposing (toInt)
 import Components.Archetype as Archetype exposing (..)
 import Components.Card as Card exposing (..)
 import Components.Decklist as Decklist exposing (..)
+import Components.DecklistGrid as DecklistGrid
+import Http
+import Json.Decode as JD exposing (string)
+import Json.Encode as JE
+import Task exposing (Task)
+
+
+--import Components.AutocompleteCardName as AutocompleteCardName exposing (..)
+
 import Ports exposing (..)
 import ToFixed exposing (..)
 
@@ -49,6 +58,7 @@ type Msg
     | EditSlot DecklistKind ID Int
     | ArchetypeMsg ID Archetype.Msg
     | CardMsg ID Card.Msg
+    | NoOp
 
 
 initialModel : Model
@@ -186,6 +196,9 @@ update msg model =
             in
                 ( newModel, saveDeck newModel )
 
+        NoOp ->
+            model ! []
+
 
 view : Model -> Html Msg
 view model =
@@ -196,7 +209,7 @@ view model =
 viewHeader : Model -> Html Msg
 viewHeader model =
     tr []
-        (td [ class "card-cell" ] []
+        (td [ class "card-cell" ] [ text ("Total Slots Used: " ++ toString (totalUsedSlots model)) ]
             :: viewDecklistHeader model.maindeck "Main" 60
             :: viewDecklistHeader model.sideboard "Side" 15
             :: List.map (viewArchetype model) model.archetypes
@@ -249,6 +262,14 @@ recommendedMaindeckCountOfCard model cardId =
             (List.sum weightedCounts) / totalWeight
 
 
+totalUsedSlots : Model -> Int
+totalUsedSlots model =
+    model.cards
+        |> List.map .id
+        |> List.map (maxCountOfCard model)
+        |> List.sum
+
+
 maxCountOfCard : Model -> ID -> Int
 maxCountOfCard model cardId =
     let
@@ -291,7 +312,7 @@ viewArchetypeButtons id =
 
 viewCardCount : Int -> Int -> Html Msg
 viewCardCount count targetCount =
-    span [ classList [ ( "invalid-count", count /= targetCount ) ] ] [ text (toString count ++ "/" ++ toString targetCount) ]
+    span [ classList [ ( "count-over", count > targetCount ), ( "count-under", count < targetCount ) ] ] [ text (toString count ++ "/" ++ toString targetCount) ]
 
 
 viewAddCard : Html Msg
@@ -323,7 +344,7 @@ slotInput currentValue saveCountMsg =
             []
 
 
-saveDeck : Model -> Cmd msg
+saveDeck : Model -> Cmd Msg
 saveDeck model =
     let
         saveArchetype archetype =
@@ -341,7 +362,60 @@ saveDeck model =
             , sideboard = Dict.toList model.sideboard
             }
     in
-        Ports.saveDeck saveDeckModel
+        Cmd.batch [ Task.perform (always NoOp) (always NoOp) (postDeck saveDeckModel), Ports.saveDeck saveDeckModel ]
+
+
+postDeck : SavedDeckModel -> Task Http.Error String
+postDeck model =
+    let
+        value =
+            JE.object
+                [ ( "archetypes", JE.list (List.map archetypeEncoder model.archetypes) )
+                , ( "cards", JE.list (List.map cardEncoder model.cards) )
+                , ( "nextId", JE.int model.nextId )
+                , ( "maindeck", decklistEncoder model.maindeck )
+                , ( "sideboard", decklistEncoder model.sideboard )
+                ]
+    in
+        Http.post string "http://localhost:3000/save" (value |> (JE.encode 4) |> Http.string)
+
+
+decklistEncoder : List ( Int, Int ) -> JE.Value
+decklistEncoder decklist =
+    let
+        encodeItem ( id, qty ) =
+            JE.object
+                [ ( "id", JE.int id )
+                , ( "qty", JE.int qty )
+                ]
+    in
+        JE.list (List.map encodeItem decklist)
+
+
+cardEncoder : Card.Model -> JE.Value
+cardEncoder card =
+    JE.object
+        [ ( "id", JE.int card.id )
+        , ( "name", JE.string card.name )
+        ]
+
+
+archetypeEncoder : SavedArchetypeModel -> JE.Value
+archetypeEncoder archetype =
+    JE.object
+        [ ( "id"
+          , JE.int archetype.id
+          )
+        , ( "name"
+          , JE.string archetype.name
+          )
+        , ( "weight"
+          , JE.float archetype.weight
+          )
+        , ( "decklist"
+          , decklistEncoder archetype.decklist
+          )
+        ]
 
 
 subscriptions : Model -> Sub Msg

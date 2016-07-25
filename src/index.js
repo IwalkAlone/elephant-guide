@@ -9,7 +9,9 @@ var app = Elm.Main.embed( document.getElementById( 'main' ) );
 
 localForage.getItem('deck', function (err, value) {
     if (!err && value) {
-        app.ports.loadDeck.send(value);
+        setTimeout(function () {
+            app.ports.loadDeck.send(value);
+        });
     }
     app.ports.saveDeck.subscribe(function (deck) {
         localForage.setItem('deck', deck);
