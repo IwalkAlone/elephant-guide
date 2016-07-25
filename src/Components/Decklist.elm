@@ -1,10 +1,8 @@
 module Components.Decklist exposing (..)
 
 import Dict exposing (..)
-
-
-type alias ID =
-    Int
+import ID exposing (..)
+import Json.Encode as JE exposing (..)
 
 
 type alias Decklist =
@@ -24,3 +22,18 @@ slotValue decklist cardId =
 
         Just value ->
             value
+
+
+encoder : Decklist -> JE.Value
+encoder decklist =
+    let
+        decklistAsList =
+            Dict.toList decklist
+
+        encodeItem ( id, qty ) =
+            JE.object
+                [ ( "id", JE.int id )
+                , ( "qty", JE.int qty )
+                ]
+    in
+        JE.list (List.map encodeItem decklistAsList)

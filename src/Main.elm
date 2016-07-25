@@ -1,25 +1,16 @@
 module Main exposing (..)
 
 import Html exposing (..)
-import Html.Attributes exposing (..)
 import Html.App as Html
-import Html.Events exposing (onClick, onInput)
 import Dict exposing (..)
-import String exposing (toInt)
-import Components.Archetype as Archetype exposing (..)
-import Components.Card as Card exposing (..)
-import Components.Decklist as Decklist exposing (..)
-import Components.DecklistGrid as DecklistGrid
+import Components.Deck.Model as Deck exposing (..)
+import Components.Deck.Update as Deck exposing (..)
+import Components.Deck.View as Deck exposing (..)
 import Http
 import Json.Decode as JD exposing (string)
 import Json.Encode as JE
 import Task exposing (Task)
-
-
---import Components.AutocompleteCardName as AutocompleteCardName exposing (..)
-
 import Ports exposing (..)
-import ToFixed exposing (..)
 
 
 main : Program Never
@@ -31,43 +22,20 @@ type alias ID =
     Int
 
 
-type alias Slot =
-    ( String, Int )
-
-
 type alias Model =
-    { archetypes : List Archetype.Model
-    , cards : List Card.Model
-    , maindeck : Decklist
-    , sideboard : Decklist
-    , nextId : ID
+    { deck : Deck.Model
     }
-
-
-type DecklistKind
-    = ArchetypeList ID
-    | Maindeck
-    | Sideboard
 
 
 type Msg
     = LoadDeck SavedDeckModel
-    | AddArchetype
-    | DeleteArchetype ID
-    | AddCard
-    | EditSlot DecklistKind ID Int
-    | ArchetypeMsg ID Archetype.Msg
-    | CardMsg ID Card.Msg
+    | DeckMsg Deck.Msg
     | NoOp
 
 
 initialModel : Model
 initialModel =
-    { archetypes = []
-    , cards = []
-    , maindeck = Dict.empty
-    , sideboard = Dict.empty
-    , nextId = 6
+    { deck = Deck.initialModel
     }
 
 
@@ -109,92 +77,23 @@ update msg model =
                     , weight = savedArchetype.weight
                     , decklist = Dict.fromList savedArchetype.decklist
                     }
-            in
-                ( { archetypes = List.map loadArchetype savedDeck.archetypes
-                  , cards = savedDeck.cards
-                  , maindeck = Dict.fromList savedDeck.maindeck
-                  , sideboard = Dict.fromList savedDeck.sideboard
-                  , nextId = savedDeck.nextId
-                  }
-                , Cmd.none
-                )
 
-        AddArchetype ->
-            let
-                newModel =
-                    { model
-                        | archetypes = model.archetypes ++ [ { id = model.nextId, name = "New Archetype", weight = 0, decklist = Dict.empty } ]
-                        , nextId = model.nextId + 1
+                loadedDeck =
+                    { archetypes = List.map loadArchetype savedDeck.archetypes
+                    , cards = savedDeck.cards
+                    , maindeck = Dict.fromList savedDeck.maindeck
+                    , sideboard = Dict.fromList savedDeck.sideboard
+                    , nextId = savedDeck.nextId
                     }
             in
-                ( newModel, saveDeck newModel )
+                { model | deck = loadedDeck } ! []
 
-        DeleteArchetype id ->
+        DeckMsg msg ->
             let
-                newModel =
-                    { model
-                        | archetypes = List.filter (\archetype -> archetype.id /= id) model.archetypes
-                    }
+                newDeck =
+                    Deck.update msg model.deck
             in
-                ( newModel, saveDeck newModel )
-
-        AddCard ->
-            let
-                newModel =
-                    { model
-                        | cards = model.cards ++ [ { id = model.nextId, name = "New Card" } ]
-                        , nextId = model.nextId + 1
-                    }
-            in
-                ( newModel, saveDeck newModel )
-
-        EditSlot decklistKind cardId newValue ->
-            let
-                newModel =
-                    case decklistKind of
-                        ArchetypeList archetypeId ->
-                            let
-                                updateArchetype archetype =
-                                    if archetype.id == archetypeId then
-                                        { archetype | decklist = Dict.insert cardId newValue archetype.decklist }
-                                    else
-                                        archetype
-                            in
-                                { model | archetypes = List.map updateArchetype model.archetypes }
-
-                        Maindeck ->
-                            { model | maindeck = Dict.insert cardId newValue model.maindeck }
-
-                        Sideboard ->
-                            { model | sideboard = Dict.insert cardId newValue model.sideboard }
-            in
-                ( newModel, saveDeck newModel )
-
-        ArchetypeMsg id msg ->
-            let
-                updateArchetype archetype =
-                    if archetype.id == id then
-                        Archetype.update msg archetype
-                    else
-                        archetype
-
-                newModel =
-                    { model | archetypes = List.map updateArchetype model.archetypes }
-            in
-                ( newModel, saveDeck newModel )
-
-        CardMsg id msg ->
-            let
-                updateCard card =
-                    if card.id == id then
-                        Card.update msg card
-                    else
-                        card
-
-                newModel =
-                    { model | cards = List.map updateCard model.cards }
-            in
-                ( newModel, saveDeck newModel )
+                { model | deck = newDeck } ! [ saveDeck newDeck ]
 
         NoOp ->
             model ! []
@@ -202,149 +101,10 @@ update msg model =
 
 view : Model -> Html Msg
 view model =
-    table []
-        ((viewHeader model :: viewLines model) ++ [ viewAddCard ])
+    Html.map DeckMsg (Deck.view model.deck)
 
 
-viewHeader : Model -> Html Msg
-viewHeader model =
-    tr []
-        (td [ class "card-cell" ] [ text ("Total Slots Used: " ++ toString (totalUsedSlots model)) ]
-            :: viewDecklistHeader model.maindeck "Main" 60
-            :: viewDecklistHeader model.sideboard "Side" 15
-            :: List.map (viewArchetype model) model.archetypes
-            ++ [ viewAddArchetype ]
-        )
-
-
-viewLines : Model -> List (Html Msg)
-viewLines model =
-    List.map (viewLine model) model.cards
-
-
-viewLine : Model -> Card.Model -> Html Msg
-viewLine model card =
-    tr []
-        (viewCard card
-            :: viewMaindeckSideboard model card.id
-            :: List.map (\archetype -> cell (slotInput (Decklist.slotValue archetype.decklist card.id) (EditSlot (ArchetypeList archetype.id) card.id)))
-                model.archetypes
-        )
-
-
-viewMaindeckSideboard : Model -> ID -> Html Msg
-viewMaindeckSideboard model cardId =
-    td [ class "maindeck-sideboard-cell", colspan 2 ]
-        [ slotInput (Decklist.slotValue model.maindeck cardId) (EditSlot Maindeck cardId)
-        , div [ class "maindeck-sideboard-estimated" ]
-            [ div [] [ text (recommendedMaindeckCountOfCard model cardId |> toFixed 2) ]
-            , hr [] []
-            , div [] [ text (toString (maxCountOfCard model cardId)) ]
-            ]
-        , slotInput (Decklist.slotValue model.sideboard cardId) (EditSlot Sideboard cardId)
-        ]
-
-
-recommendedMaindeckCountOfCard : Model -> ID -> Float
-recommendedMaindeckCountOfCard model cardId =
-    let
-        weightedCounts =
-            List.map (\archetype -> (toFloat (Decklist.slotValue archetype.decklist cardId) * archetype.weight)) model.archetypes
-
-        totalWeight =
-            model.archetypes
-                |> List.map .weight
-                |> List.sum
-    in
-        if totalWeight == 0 then
-            0
-        else
-            (List.sum weightedCounts) / totalWeight
-
-
-totalUsedSlots : Model -> Int
-totalUsedSlots model =
-    model.cards
-        |> List.map .id
-        |> List.map (maxCountOfCard model)
-        |> List.sum
-
-
-maxCountOfCard : Model -> ID -> Int
-maxCountOfCard model cardId =
-    let
-        counts =
-            List.map (\archetype -> Decklist.slotValue archetype.decklist cardId) model.archetypes
-    in
-        Maybe.withDefault 0 (List.maximum counts)
-
-
-viewCard : Card.Model -> Html Msg
-viewCard model =
-    (td [ class "card-cell" ] [ Html.map (CardMsg model.id) (Card.view model) ])
-
-
-viewAddArchetype : Html Msg
-viewAddArchetype =
-    cell (button [ onClick AddArchetype ] [ text "+ Add Archetype" ])
-
-
-viewArchetype : Model -> Archetype.Model -> Html Msg
-viewArchetype model archetype =
-    (td [ class "archetype-cell" ]
-        [ div [] [ Html.map (ArchetypeMsg archetype.id) (Archetype.viewName archetype) ]
-        , div [] [ Html.map (ArchetypeMsg archetype.id) (Archetype.viewWeight archetype), viewCardCount (Decklist.cardCount archetype.decklist) 60 ]
-        ]
-    )
-
-
-viewDecklistHeader : Decklist -> String -> Int -> Html Msg
-viewDecklistHeader decklist name targetCount =
-    (td [ class "archetype-cell" ]
-        [ div [] [ text name ], div [] [ viewCardCount (Decklist.cardCount decklist) targetCount ] ]
-    )
-
-
-viewArchetypeButtons : ID -> Html Msg
-viewArchetypeButtons id =
-    button [ onClick (DeleteArchetype id) ] [ text "Delete" ]
-
-
-viewCardCount : Int -> Int -> Html Msg
-viewCardCount count targetCount =
-    span [ classList [ ( "count-over", count > targetCount ), ( "count-under", count < targetCount ) ] ] [ text (toString count ++ "/" ++ toString targetCount) ]
-
-
-viewAddCard : Html Msg
-viewAddCard =
-    tr [] [ cell (button [ onClick AddCard ] [ text "+ Add Card" ]) ]
-
-
-cell : Html msg -> Html msg
-cell html =
-    td [] [ html ]
-
-
-slotInput : Int -> (Int -> Msg) -> Html Msg
-slotInput currentValue saveCountMsg =
-    let
-        viewValue =
-            case currentValue of
-                0 ->
-                    ""
-
-                value ->
-                    toString value
-    in
-        input
-            [ type' "number"
-            , value viewValue
-            , onInput (\input -> saveCountMsg (Result.withDefault 0 (String.toInt input)))
-            ]
-            []
-
-
-saveDeck : Model -> Cmd Msg
+saveDeck : Deck.Model -> Cmd Msg
 saveDeck model =
     let
         saveArchetype archetype =
@@ -362,60 +122,12 @@ saveDeck model =
             , sideboard = Dict.toList model.sideboard
             }
     in
-        Cmd.batch [ Task.perform (always NoOp) (always NoOp) (postDeck saveDeckModel), Ports.saveDeck saveDeckModel ]
+        Cmd.batch [ Task.perform (always NoOp) (always NoOp) (postDeck model), Ports.saveDeck saveDeckModel ]
 
 
-postDeck : SavedDeckModel -> Task Http.Error String
+postDeck : Deck.Model -> Task Http.Error String
 postDeck model =
-    let
-        value =
-            JE.object
-                [ ( "archetypes", JE.list (List.map archetypeEncoder model.archetypes) )
-                , ( "cards", JE.list (List.map cardEncoder model.cards) )
-                , ( "nextId", JE.int model.nextId )
-                , ( "maindeck", decklistEncoder model.maindeck )
-                , ( "sideboard", decklistEncoder model.sideboard )
-                ]
-    in
-        Http.post string "http://localhost:3000/save" (value |> (JE.encode 4) |> Http.string)
-
-
-decklistEncoder : List ( Int, Int ) -> JE.Value
-decklistEncoder decklist =
-    let
-        encodeItem ( id, qty ) =
-            JE.object
-                [ ( "id", JE.int id )
-                , ( "qty", JE.int qty )
-                ]
-    in
-        JE.list (List.map encodeItem decklist)
-
-
-cardEncoder : Card.Model -> JE.Value
-cardEncoder card =
-    JE.object
-        [ ( "id", JE.int card.id )
-        , ( "name", JE.string card.name )
-        ]
-
-
-archetypeEncoder : SavedArchetypeModel -> JE.Value
-archetypeEncoder archetype =
-    JE.object
-        [ ( "id"
-          , JE.int archetype.id
-          )
-        , ( "name"
-          , JE.string archetype.name
-          )
-        , ( "weight"
-          , JE.float archetype.weight
-          )
-        , ( "decklist"
-          , decklistEncoder archetype.decklist
-          )
-        ]
+    Http.post string "http://localhost:3000/save" (Deck.encoder model |> (JE.encode 4) |> Http.string)
 
 
 subscriptions : Model -> Sub Msg

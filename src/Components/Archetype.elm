@@ -4,7 +4,8 @@ import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (..)
 import String exposing (toFloat)
-import Components.Decklist exposing (..)
+import Components.Decklist as Decklist exposing (..)
+import Json.Encode as JE exposing (..)
 
 
 type alias Model =
@@ -44,3 +45,21 @@ viewWeight model =
         , onInput (\input -> EditWeight (Result.withDefault 0 (String.toFloat input)))
         ]
         []
+
+
+encoder : Model -> JE.Value
+encoder archetype =
+    JE.object
+        [ ( "id"
+          , JE.int archetype.id
+          )
+        , ( "name"
+          , JE.string archetype.name
+          )
+        , ( "weight"
+          , JE.float archetype.weight
+          )
+        , ( "decklist"
+          , Decklist.encoder archetype.decklist
+          )
+        ]
