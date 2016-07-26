@@ -7,8 +7,6 @@ import Components.Deck.Model as Deck exposing (..)
 import Components.Deck.Update as Deck exposing (..)
 import Components.Deck.View as Deck exposing (..)
 import Http
-import Json.Decode as JD exposing (string)
-import Json.Encode as JE
 import Task exposing (Task)
 import Ports exposing (..)
 
@@ -16,10 +14,6 @@ import Ports exposing (..)
 main : Program Never
 main =
     Html.programWithFlags { init = init, view = view, update = update, subscriptions = subscriptions }
-
-
-type alias ID =
-    Int
 
 
 type alias Model =
@@ -39,28 +33,6 @@ initialModel : Model
 initialModel =
     { deck = Deck.initialModel
     }
-
-
-
--- initialSlots : List ( ID, Archetype.Model ) -> List ( ID, Card.Model ) -> Dict ( ID, ID ) Int
--- initialSlots archetypes cards =
---     let
---         archetypeIds =
---             List.map fst archetypes
---
---         cardIds =
---             List.map fst cards
---
---         archetypePairs archetypeId =
---             List.foldr (\cardId listSoFar -> ( archetypeId, cardId ) :: listSoFar) [] cardIds
---
---         pairs =
---             List.foldr (\archetypeId listSoFar -> List.concat [ archetypePairs archetypeId, listSoFar ]) [] archetypeIds
---
---         pairsWithCounts =
---             List.map (\pair -> ( pair, 4 )) pairs
---     in
---         Dict.fromList pairsWithCounts
 
 
 init : Never -> ( Model, Cmd Msg )
@@ -86,12 +58,14 @@ update msg model =
                     , maindeck = Dict.fromList savedDeck.maindeck
                     , sideboard = Dict.fromList savedDeck.sideboard
                     , nextId = savedDeck.nextId
+                    , tableMetrics = Nothing
+                    , dragInsertAtIndex = Nothing
                     }
             in
                 { model | deck = loadedDeck } ! []
 
         GetDeck deck ->
-            { model | deck = Debug.log "deck" deck } ! []
+            { model | deck = deck } ! []
 
         GetDeckError error ->
             let
@@ -102,10 +76,10 @@ update msg model =
 
         DeckMsg msg ->
             let
-                newDeck =
+                ( newDeck, cmd ) =
                     Deck.update msg model.deck
             in
-                { model | deck = newDeck } ! [ saveDeck newDeck ]
+                { model | deck = newDeck } ! [ Cmd.map DeckMsg cmd ]
 
         NoOp ->
             model ! []
@@ -116,37 +90,11 @@ view model =
     Html.map DeckMsg (Deck.view model.deck)
 
 
-saveDeck : Deck.Model -> Cmd Msg
-saveDeck model =
-    let
-        saveArchetype archetype =
-            { id = archetype.id
-            , weight = archetype.weight
-            , name = archetype.name
-            , decklist = Dict.toList archetype.decklist
-            }
-
-        saveDeckModel =
-            { archetypes = List.map saveArchetype model.archetypes
-            , cards = model.cards
-            , nextId = model.nextId
-            , maindeck = Dict.toList model.maindeck
-            , sideboard = Dict.toList model.sideboard
-            }
-    in
-        Cmd.batch [ Task.perform (always NoOp) (always NoOp) (postDeck model), Ports.saveDeck saveDeckModel ]
-
-
 getDeck : Task Http.Error Deck.Model
 getDeck =
     Http.get Deck.decoder "http://localhost:3000/deck"
 
 
-postDeck : Deck.Model -> Task Http.Error String
-postDeck model =
-    Http.post string "http://localhost:3000/save" (Deck.encoder model |> (JE.encode 4) |> Http.string)
-
-
 subscriptions : Model -> Sub Msg
 subscriptions model =
-    Sub.none
+    Sub.map DeckMsg (Deck.subscriptions model.deck)

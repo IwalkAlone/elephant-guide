@@ -12,8 +12,6 @@ import Html.Attributes exposing (..)
 import Html.Events exposing (..)
 import String
 import ToFixed exposing (toFixed)
-import DOM exposing (target, Rectangle, boundingClientRect)
-import Json.Decode as JD
 
 
 view : Model -> Html Msg
@@ -24,7 +22,7 @@ view model =
 
 viewHeader : Model -> Html Msg
 viewHeader model =
-    tr []
+    thead []
         (td [ class "card-cell" ] [ text ("Total Slots Used: " ++ toString (totalUsedSlots model)) ]
             :: viewDecklistHeader model.maindeck "Main" 60
             :: viewDecklistHeader model.sideboard "Side" 15
@@ -35,12 +33,12 @@ viewHeader model =
 
 viewLines : Model -> List (Html Msg)
 viewLines model =
-    List.map (viewLine model) model.cards
+    List.indexedMap (viewLine model) model.cards
 
 
-viewLine : Model -> Card.Model -> Html Msg
-viewLine model card =
-    tr []
+viewLine : Model -> Int -> Card.Model -> Html Msg
+viewLine model index card =
+    tr [ classList [ ( "drop-target-above", model.dragInsertAtIndex == Just index ) ] ]
         (viewCard card
             :: viewMaindeckSideboard model card.id
             :: List.map (\archetype -> cell (slotInput (Decklist.slotValue archetype.decklist card.id) (EditSlot (ArchetypeList archetype.id) card.id)))
@@ -97,7 +95,7 @@ maxCountOfCard model cardId =
 
 viewCard : Card.Model -> Html Msg
 viewCard model =
-    (td [ class "card-cell", on "mousedown" (JD.map (DragStart model.id) (DOM.target boundingClientRect)) ] [ Html.map (CardMsg model.id) (Card.view model) ])
+    (td [ class "card-cell", onMouseDown (DragStart model.id) ] [ Html.map (CardMsg model.id) (Card.view model) ])
 
 
 viewAddArchetype : Html Msg

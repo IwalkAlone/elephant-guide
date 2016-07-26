@@ -24,7 +24,19 @@ type alias SavedArchetypeModel =
     }
 
 
+type alias TableMetrics =
+    { tableTop : Float
+    , rowBottoms : List Float
+    }
+
+
 port saveDeck : SavedDeckModel -> Cmd msg
 
 
 port loadDeck : (SavedDeckModel -> msg) -> Sub msg
+
+
+port requestTableMetrics : () -> Cmd msg
+
+
+port receiveTableMetrics : (TableMetrics -> msg) -> Sub msg

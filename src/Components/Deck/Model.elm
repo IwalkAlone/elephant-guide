@@ -7,6 +7,7 @@ import Components.Decklist as Decklist exposing (..)
 import Dict
 import Json.Encode as JE exposing (..)
 import Json.Decode as JD exposing (..)
+import Ports exposing (TableMetrics)
 
 
 type alias Model =
@@ -15,6 +16,8 @@ type alias Model =
     , maindeck : Decklist
     , sideboard : Decklist
     , nextId : ID
+    , tableMetrics : Maybe TableMetrics
+    , dragInsertAtIndex : Maybe Int
     }
 
 
@@ -25,6 +28,8 @@ initialModel =
     , maindeck = Dict.empty
     , sideboard = Dict.empty
     , nextId = 1
+    , tableMetrics = Nothing
+    , dragInsertAtIndex = Nothing
     }
 
 
@@ -41,9 +46,11 @@ encoder model =
 
 decoder : Decoder Model
 decoder =
-    JD.object5 Model
+    JD.object7 Model
         ("archetypes" := JD.list Archetype.decoder)
         ("cards" := JD.list Card.decoder)
         ("maindeck" := Decklist.decoder)
         ("sideboard" := Decklist.decoder)
         ("nextId" := JD.int)
+        (JD.succeed Nothing)
+        (JD.succeed Nothing)

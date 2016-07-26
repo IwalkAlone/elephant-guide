@@ -17,3 +17,12 @@ localForage.getItem('deck', function (err, value) {
         localForage.setItem('deck', deck);
     });
 });
+
+app.ports.requestTableMetrics.subscribe(function () {
+  var tableTop = document.querySelector('table').offsetTop;
+  var rowBottoms = Array.prototype.map.call(document.querySelectorAll('tr'), function (tr) {return tr.getBoundingClientRect().bottom;})
+  app.ports.receiveTableMetrics.send({
+    tableTop: tableTop,
+    rowBottoms: rowBottoms
+  })
+})

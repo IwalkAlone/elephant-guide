@@ -1,6 +1,8 @@
 table {
     border: 1px solid black;
+    box-sizing: border-box;
     border-collapse: collapse;
+    user-select: none;
     td {
         border: 1px solid black;
     }
@@ -64,4 +66,10 @@ input {
         display: inline-block;
         font-size: 10px;
     }
+}
+.drop-target-above {
+  border-top: 3px solid gray;
+}
+.drop-target-below {
+  border-bottom: 3px solid gray;
 }
