@@ -29,6 +29,8 @@ type alias Model =
 
 type Msg
     = LoadDeck SavedDeckModel
+    | GetDeck Deck.Model
+    | GetDeckError Http.Error
     | DeckMsg Deck.Msg
     | NoOp
 
@@ -63,7 +65,7 @@ initialModel =
 
 init : Never -> ( Model, Cmd Msg )
 init flags =
-    ( initialModel, Cmd.none )
+    ( initialModel, Task.perform GetDeckError GetDeck getDeck )
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -87,6 +89,16 @@ update msg model =
                     }
             in
                 { model | deck = loadedDeck } ! []
+
+        GetDeck deck ->
+            { model | deck = Debug.log "deck" deck } ! []
+
+        GetDeckError error ->
+            let
+                debug =
+                    Debug.log "Error loading deck: " error
+            in
+                model ! []
 
         DeckMsg msg ->
             let
@@ -125,6 +137,11 @@ saveDeck model =
         Cmd.batch [ Task.perform (always NoOp) (always NoOp) (postDeck model), Ports.saveDeck saveDeckModel ]
 
 
+getDeck : Task Http.Error Deck.Model
+getDeck =
+    Http.get Deck.decoder "http://localhost:3000/deck"
+
+
 postDeck : Deck.Model -> Task Http.Error String
 postDeck model =
     Http.post string "http://localhost:3000/save" (Deck.encoder model |> (JE.encode 4) |> Http.string)
@@ -132,4 +149,4 @@ postDeck model =
 
 subscriptions : Model -> Sub Msg
 subscriptions model =
-    Ports.loadDeck LoadDeck
+    Sub.none

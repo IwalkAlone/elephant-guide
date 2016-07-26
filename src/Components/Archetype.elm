@@ -6,6 +6,7 @@ import Html.Events exposing (..)
 import String exposing (toFloat)
 import Components.Decklist as Decklist exposing (..)
 import Json.Encode as JE exposing (..)
+import Json.Decode as JD exposing ((:=))
 
 
 type alias Model =
@@ -63,3 +64,12 @@ encoder archetype =
           , Decklist.encoder archetype.decklist
           )
         ]
+
+
+decoder : JD.Decoder Model
+decoder =
+    JD.object4 Model
+        ("id" := JD.int)
+        ("name" := JD.string)
+        ("weight" := JD.float)
+        ("decklist" := Decklist.decoder)

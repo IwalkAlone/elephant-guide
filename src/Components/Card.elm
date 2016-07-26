@@ -4,10 +4,12 @@ import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (..)
 import Json.Encode as JE exposing (..)
+import Json.Decode as JD exposing (..)
+import ID exposing (..)
 
 
 type alias Model =
-    { id : Int
+    { id : ID
     , name : String
     , editing : Bool
     , currentText : String
@@ -18,6 +20,15 @@ type Msg
     = StartEditing
     | Input String
     | FinishEditing
+
+
+initialModel : ID -> String -> Model
+initialModel id name =
+    { id = id
+    , name = name
+    , editing = False
+    , currentText = name
+    }
 
 
 update : Msg -> Model -> Model
@@ -49,3 +60,8 @@ encoder card =
         [ ( "id", JE.int card.id )
         , ( "name", JE.string card.name )
         ]
+
+
+decoder : Decoder Model
+decoder =
+    JD.object2 initialModel ("id" := JD.int) ("name" := JD.string)

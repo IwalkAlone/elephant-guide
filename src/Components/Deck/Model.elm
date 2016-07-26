@@ -6,6 +6,7 @@ import Components.Card as Card
 import Components.Decklist as Decklist exposing (..)
 import Dict
 import Json.Encode as JE exposing (..)
+import Json.Decode as JD exposing (..)
 
 
 type alias Model =
@@ -36,3 +37,13 @@ encoder model =
         , ( "maindeck", Decklist.encoder model.maindeck )
         , ( "sideboard", Decklist.encoder model.sideboard )
         ]
+
+
+decoder : Decoder Model
+decoder =
+    JD.object5 Model
+        ("archetypes" := JD.list Archetype.decoder)
+        ("cards" := JD.list Card.decoder)
+        ("maindeck" := Decklist.decoder)
+        ("sideboard" := Decklist.decoder)
+        ("nextId" := JD.int)

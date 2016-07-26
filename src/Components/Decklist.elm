@@ -3,6 +3,7 @@ module Components.Decklist exposing (..)
 import Dict exposing (..)
 import ID exposing (..)
 import Json.Encode as JE exposing (..)
+import Json.Decode as JD exposing (..)
 
 
 type alias Decklist =
@@ -37,3 +38,10 @@ encoder decklist =
                 ]
     in
         JE.list (List.map encodeItem decklistAsList)
+
+
+decoder : Decoder Decklist
+decoder =
+    JD.object2 (,) ("id" := JD.int) ("qty" := JD.int)
+        |> JD.list
+        |> JD.map Dict.fromList

@@ -40,7 +40,7 @@ update msg model =
 
         AddCard ->
             { model
-                | cards = model.cards ++ [ { id = model.nextId, name = "New Card", editing = False, currentText = "New Card" } ]
+                | cards = model.cards ++ [ Card.initialModel model.nextId "New Card" ]
                 , nextId = model.nextId + 1
             }
 
