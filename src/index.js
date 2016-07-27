@@ -20,7 +20,7 @@ localForage.getItem('deck', function (err, value) {
 
 app.ports.requestTableMetrics.subscribe(function () {
   var tableTop = document.querySelector('table').offsetTop;
-  var rowBottoms = Array.prototype.map.call(document.querySelectorAll('tr'), function (tr) {return tr.getBoundingClientRect().bottom;})
+  var rowBottoms = Array.prototype.map.call(document.querySelectorAll('tr'), function (tr) {return tr.offsetTop + tr.offsetHeight;})
   app.ports.receiveTableMetrics.send({
     tableTop: tableTop,
     rowBottoms: rowBottoms

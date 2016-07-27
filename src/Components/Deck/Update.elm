@@ -24,7 +24,7 @@ type Msg
     | DeleteArchetype ID
     | AddCard
     | EditSlot DecklistKind ID Int
-    | DragStart ID
+    | DragStart Int
     | DragMove Mouse.Position
     | DragEnd Mouse.Position
     | ReceivedTableMetrics Ports.TableMetrics
@@ -37,42 +37,46 @@ update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
         AddArchetype ->
-            { model
-                | archetypes = model.archetypes ++ [ { id = model.nextId, name = "New Archetype", weight = 0, decklist = Dict.empty } ]
-                , nextId = model.nextId + 1
-            }
-                ! [ saveDeck model ]
+            withSave
+                { model
+                    | archetypes = model.archetypes ++ [ { id = model.nextId, name = "New Archetype", weight = 0, decklist = Dict.empty } ]
+                    , nextId = model.nextId + 1
+                }
 
         DeleteArchetype id ->
-            { model
-                | archetypes = List.filter (\archetype -> archetype.id /= id) model.archetypes
-            }
-                ! [ saveDeck model ]
+            withSave
+                { model
+                    | archetypes = List.filter (\archetype -> archetype.id /= id) model.archetypes
+                }
 
         AddCard ->
-            { model
-                | cards = model.cards ++ [ Card.initialModel model.nextId "New Card" ]
-                , nextId = model.nextId + 1
-            }
-                ! [ saveDeck model ]
+            withSave
+                { model
+                    | cards = model.cards ++ [ Card.initialModel model.nextId "New Card" ]
+                    , nextId = model.nextId + 1
+                }
 
         EditSlot decklistKind cardId newValue ->
-            case decklistKind of
-                ArchetypeList archetypeId ->
-                    let
-                        updateArchetype archetype =
-                            if archetype.id == archetypeId then
-                                { archetype | decklist = Dict.insert cardId newValue archetype.decklist }
-                            else
-                                archetype
-                    in
-                        { model | archetypes = List.map updateArchetype model.archetypes } ! [ saveDeck model ]
+            let
+                newModel =
+                    case decklistKind of
+                        ArchetypeList archetypeId ->
+                            let
+                                updateArchetype archetype =
+                                    if archetype.id == archetypeId then
+                                        { archetype | decklist = Dict.insert cardId newValue archetype.decklist }
+                                    else
+                                        archetype
+                            in
+                                { model | archetypes = List.map updateArchetype model.archetypes }
 
-                Maindeck ->
-                    { model | maindeck = Dict.insert cardId newValue model.maindeck } ! [ saveDeck model ]
+                        Maindeck ->
+                            { model | maindeck = Dict.insert cardId newValue model.maindeck }
 
-                Sideboard ->
-                    { model | sideboard = Dict.insert cardId newValue model.sideboard } ! [ saveDeck model ]
+                        Sideboard ->
+                            { model | sideboard = Dict.insert cardId newValue model.sideboard }
+            in
+                withSave newModel
 
         ArchetypeMsg id msg ->
             let
@@ -82,7 +86,7 @@ update msg model =
                     else
                         archetype
             in
-                { model | archetypes = List.map updateArchetype model.archetypes } ! [ saveDeck model ]
+                withSave { model | archetypes = List.map updateArchetype model.archetypes }
 
         CardMsg id msg ->
             let
@@ -92,22 +96,52 @@ update msg model =
                     else
                         card
             in
-                { model | cards = List.map updateCard model.cards } ! [ saveDeck model ]
+                withSave { model | cards = List.map updateCard model.cards }
 
-        DragStart id ->
-            model ! [ Ports.requestTableMetrics () ]
+        DragStart index ->
+            { model | cardIndexBeingDragged = Just index, dragInsertAtIndex = Just index } ! [ Ports.requestTableMetrics () ]
 
         ReceivedTableMetrics metrics ->
             { model | tableMetrics = Just metrics } ! []
 
         DragMove position ->
-            { model | dragInsertAtIndex = dragInsertAtIndex model position } ! []
+            -- important not to modify model if possible because of lazy optimization
+            let
+                newInsertIndex =
+                    dragInsertAtIndex model position
+            in
+                if newInsertIndex /= model.dragInsertAtIndex then
+                    { model | dragInsertAtIndex = dragInsertAtIndex model position } ! []
+                else
+                    model ! []
 
         DragEnd position ->
-            { model | tableMetrics = Nothing } ! []
+            let
+                fromIndex =
+                    case model.cardIndexBeingDragged of
+                        Nothing ->
+                            Debug.crash "model.cardIndexBeingDragged should not be Nothing"
+
+                        Just index ->
+                            index
+
+                toIndex =
+                    case model.dragInsertAtIndex of
+                        Nothing ->
+                            Debug.crash "model.dragInsertAtIndex should not be Nothing"
+
+                        Just index ->
+                            index
+            in
+                { model | cards = splice1 fromIndex toIndex model.cards, tableMetrics = Nothing, cardIndexBeingDragged = Nothing, dragInsertAtIndex = Nothing } ! []
 
         NoOp ->
             model ! []
+
+
+withSave : Model -> ( Model, Cmd Msg )
+withSave model =
+    ( model, saveDeck model )
 
 
 dragInsertAtIndex : Model -> Mouse.Position -> Maybe Int
@@ -118,6 +152,21 @@ dragInsertAtIndex model position =
 
         Just metrics ->
             List.filter (\item -> item < toFloat position.y) metrics.rowBottoms |> List.length |> Just
+
+
+splice1 : Int -> Int -> List a -> List a
+splice1 fromIndex toIndex list =
+    if fromIndex == toIndex then
+        list
+    else
+        let
+            listContainingItem =
+                List.take 1 (List.drop fromIndex list)
+
+            listWithoutItem =
+                List.take fromIndex list ++ List.drop (fromIndex + 1) list
+        in
+            List.take toIndex listWithoutItem ++ listContainingItem ++ List.drop toIndex listWithoutItem
 
 
 saveDeck : Model -> Cmd Msg

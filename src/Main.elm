@@ -2,6 +2,7 @@ module Main exposing (..)
 
 import Html exposing (..)
 import Html.App as Html
+import Html.Lazy exposing (..)
 import Dict exposing (..)
 import Components.Deck.Model as Deck exposing (..)
 import Components.Deck.Update as Deck exposing (..)
@@ -58,8 +59,11 @@ update msg model =
                     , maindeck = Dict.fromList savedDeck.maindeck
                     , sideboard = Dict.fromList savedDeck.sideboard
                     , nextId = savedDeck.nextId
+                    , cardIndexBeingDragged = Nothing
                     , tableMetrics = Nothing
-                    , dragInsertAtIndex = Nothing
+                    , dragInsertAtIndex =
+                        Nothing
+                        --    , dragState = NotDragging
                     }
             in
                 { model | deck = loadedDeck } ! []
@@ -87,7 +91,7 @@ update msg model =
 
 view : Model -> Html Msg
 view model =
-    Html.map DeckMsg (Deck.view model.deck)
+    Html.map DeckMsg (lazy Deck.view model.deck)
 
 
 getDeck : Task Http.Error Deck.Model

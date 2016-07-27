@@ -10,14 +10,15 @@ import Html exposing (..)
 import Html.App as Html
 import Html.Attributes exposing (..)
 import Html.Events exposing (..)
+import Html.Keyed exposing (..)
 import String
 import ToFixed exposing (toFixed)
 
 
 view : Model -> Html Msg
 view model =
-    table []
-        ((viewHeader model :: viewLines model) ++ [ viewAddCard ])
+    keyedTable []
+        ([ ( "$Header", viewHeader model ) ] ++ viewLines model ++ [ ( "$AddCard", viewAddCard ) ])
 
 
 viewHeader : Model -> Html Msg
@@ -31,19 +32,26 @@ viewHeader model =
         )
 
 
-viewLines : Model -> List (Html Msg)
+viewLines : Model -> List ( String, Html Msg )
 viewLines model =
     List.indexedMap (viewLine model) model.cards
 
 
-viewLine : Model -> Int -> Card.Model -> Html Msg
+viewLine : Model -> Int -> Card.Model -> ( String, Html Msg )
 viewLine model index card =
-    tr [ classList [ ( "drop-target-above", model.dragInsertAtIndex == Just index ) ] ]
-        (viewCard card
+    ( "$Card" ++ card.name
+    , tr
+        [ classList
+            [ ( "drop-target-above", model.dragInsertAtIndex == Just index )
+            , ( "drop-target-below", model.dragInsertAtIndex == Just (index + 1) )
+            ]
+        ]
+        (viewCard card index
             :: viewMaindeckSideboard model card.id
             :: List.map (\archetype -> cell (slotInput (Decklist.slotValue archetype.decklist card.id) (EditSlot (ArchetypeList archetype.id) card.id)))
                 model.archetypes
         )
+    )
 
 
 viewMaindeckSideboard : Model -> ID -> Html Msg
@@ -93,9 +101,9 @@ maxCountOfCard model cardId =
         Maybe.withDefault 0 (List.maximum counts)
 
 
-viewCard : Card.Model -> Html Msg
-viewCard model =
-    (td [ class "card-cell", onMouseDown (DragStart model.id) ] [ Html.map (CardMsg model.id) (Card.view model) ])
+viewCard : Card.Model -> Int -> Html Msg
+viewCard model index =
+    (td [ class "card-cell", onMouseDown (DragStart index) ] [ Html.map (CardMsg model.id) (Card.view model) ])
 
 
 viewAddArchetype : Html Msg
@@ -156,3 +164,8 @@ slotInput currentValue saveCountMsg =
             , onInput (\input -> saveCountMsg (Result.withDefault 0 (String.toInt input)))
             ]
             []
+
+
+keyedTable : List (Attribute a) -> List ( String, Html a ) -> Html a
+keyedTable =
+    Html.Keyed.node "table"
