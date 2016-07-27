@@ -39,19 +39,34 @@ viewLines model =
 
 viewLine : Model -> Int -> Card.Model -> ( String, Html Msg )
 viewLine model index card =
-    ( "$Card" ++ card.name
-    , tr
-        [ classList
-            [ ( "drop-target-above", model.dragInsertAtIndex == Just index )
-            , ( "drop-target-below", model.dragInsertAtIndex == Just (index + 1) )
-            ]
-        ]
-        (viewCard card index
-            :: viewMaindeckSideboard model card.id
-            :: List.map (\archetype -> cell (slotInput (Decklist.slotValue archetype.decklist card.id) (EditSlot (ArchetypeList archetype.id) card.id)))
-                model.archetypes
+    let
+        classes =
+            case model.dragState of
+                NotDragging ->
+                    []
+
+                Dragging fromIndex toIndex ->
+                    let
+                        displayedToIndex =
+                            if fromIndex + 1 == toIndex then
+                                toIndex + 1
+                            else
+                                toIndex
+                    in
+                        [ ( "drop-target-above", displayedToIndex == index )
+                        , ( "drop-target-below", displayedToIndex == index + 1 )
+                        , ( "dragging", fromIndex == index )
+                        ]
+    in
+        ( "$Card" ++ card.name
+        , tr
+            [ classList classes ]
+            (viewCard card index
+                :: viewMaindeckSideboard model card.id
+                :: List.map (\archetype -> cell (slotInput (Decklist.slotValue archetype.decklist card.id) (EditSlot (ArchetypeList archetype.id) card.id)))
+                    model.archetypes
+            )
         )
-    )
 
 
 viewMaindeckSideboard : Model -> ID -> Html Msg

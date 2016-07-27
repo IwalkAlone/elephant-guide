@@ -16,11 +16,9 @@ type alias Model =
     , maindeck : Decklist
     , sideboard : Decklist
     , nextId : ID
-    , cardIndexBeingDragged : Maybe Int
     , tableMetrics :
         Maybe TableMetrics
-        --    , dragState : DragState
-    , dragInsertAtIndex : Maybe Int
+    , dragState : DragState
     }
 
 
@@ -36,9 +34,8 @@ initialModel =
     , maindeck = Dict.empty
     , sideboard = Dict.empty
     , nextId = 1
-    , cardIndexBeingDragged = Nothing
     , tableMetrics = Nothing
-    , dragInsertAtIndex = Nothing
+    , dragState = NotDragging
     }
 
 
@@ -55,12 +52,11 @@ encoder model =
 
 decoder : Decoder Model
 decoder =
-    JD.object8 Model
+    JD.object7 Model
         ("archetypes" := JD.list Archetype.decoder)
         ("cards" := JD.list Card.decoder)
         ("maindeck" := Decklist.decoder)
         ("sideboard" := Decklist.decoder)
         ("nextId" := JD.int)
         (JD.succeed Nothing)
-        (JD.succeed Nothing)
-        (JD.succeed Nothing)
+        (JD.succeed NotDragging)

@@ -59,11 +59,8 @@ update msg model =
                     , maindeck = Dict.fromList savedDeck.maindeck
                     , sideboard = Dict.fromList savedDeck.sideboard
                     , nextId = savedDeck.nextId
-                    , cardIndexBeingDragged = Nothing
                     , tableMetrics = Nothing
-                    , dragInsertAtIndex =
-                        Nothing
-                        --    , dragState = NotDragging
+                    , dragState = NotDragging
                     }
             in
                 { model | deck = loadedDeck } ! []

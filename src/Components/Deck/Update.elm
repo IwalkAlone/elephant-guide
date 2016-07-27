@@ -99,41 +99,41 @@ update msg model =
                 withSave { model | cards = List.map updateCard model.cards }
 
         DragStart index ->
-            { model | cardIndexBeingDragged = Just index, dragInsertAtIndex = Just index } ! [ Ports.requestTableMetrics () ]
+            { model | dragState = Dragging index index } ! [ Ports.requestTableMetrics () ]
 
         ReceivedTableMetrics metrics ->
             { model | tableMetrics = Just metrics } ! []
 
         DragMove position ->
             -- important not to modify model if possible because of lazy optimization
-            let
-                newInsertIndex =
-                    dragInsertAtIndex model position
-            in
-                if newInsertIndex /= model.dragInsertAtIndex then
-                    { model | dragInsertAtIndex = dragInsertAtIndex model position } ! []
-                else
+            case model.dragState of
+                NotDragging ->
                     model ! []
 
+                Dragging fromIndex toIndex ->
+                    let
+                        maybeNewToIndex =
+                            dragInsertAtIndex model position
+                    in
+                        case maybeNewToIndex of
+                            Nothing ->
+                                model ! []
+
+                            Just newToIndex ->
+                                (if newToIndex == toIndex then
+                                    model
+                                 else
+                                    { model | dragState = Dragging fromIndex newToIndex }
+                                )
+                                    ! []
+
         DragEnd position ->
-            let
-                fromIndex =
-                    case model.cardIndexBeingDragged of
-                        Nothing ->
-                            Debug.crash "model.cardIndexBeingDragged should not be Nothing"
+            case model.dragState of
+                NotDragging ->
+                    model ! []
 
-                        Just index ->
-                            index
-
-                toIndex =
-                    case model.dragInsertAtIndex of
-                        Nothing ->
-                            Debug.crash "model.dragInsertAtIndex should not be Nothing"
-
-                        Just index ->
-                            index
-            in
-                { model | cards = splice1 fromIndex toIndex model.cards, tableMetrics = Nothing, cardIndexBeingDragged = Nothing, dragInsertAtIndex = Nothing } ! []
+                Dragging fromIndex toIndex ->
+                    { model | cards = splice1 fromIndex toIndex model.cards, tableMetrics = Nothing, dragState = NotDragging } ! []
 
         NoOp ->
             model ! []
