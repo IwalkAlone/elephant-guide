@@ -28,6 +28,7 @@ type Msg
     | DragMove Mouse.Position
     | DragEnd Mouse.Position
     | ReceivedTableMetrics Ports.TableMetrics
+    | FocusAndSelect String
     | ArchetypeMsg ID Archetype.Msg
     | CardMsg ID Card.Msg
     | NoOp
@@ -134,6 +135,9 @@ update msg model =
 
                 Dragging fromIndex toIndex ->
                     { model | cards = splice1 fromIndex toIndex model.cards, tableMetrics = Nothing, dragState = NotDragging } ! []
+
+        FocusAndSelect elementId ->
+            model ! [ Ports.focusAndSelect elementId ]
 
         NoOp ->
             model ! []

@@ -26,3 +26,12 @@ app.ports.requestTableMetrics.subscribe(function () {
     rowBottoms: rowBottoms
   })
 })
+
+app.ports.focusAndSelect.subscribe(function (id) {
+  var element = document.getElementById(id);
+  if (!element) {
+    console.error("Could not find element by ID: " + id);
+  }
+  element.focus();
+  element.select();
+})

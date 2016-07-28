@@ -40,3 +40,6 @@ port requestTableMetrics : () -> Cmd msg
 
 
 port receiveTableMetrics : (TableMetrics -> msg) -> Sub msg
+
+
+port focusAndSelect : String -> Cmd msg

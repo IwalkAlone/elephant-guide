@@ -13,6 +13,7 @@ import Html.Events exposing (..)
 import Html.Keyed exposing (..)
 import String
 import ToFixed exposing (toFixed)
+import DomManipulation exposing (..)
 
 
 view : Model -> Html Msg
@@ -63,7 +64,17 @@ viewLine model index card =
             [ classList classes ]
             (viewCard card index
                 :: viewMaindeckSideboard model card.id
-                :: List.map (\archetype -> cell (slotInput (Decklist.slotValue archetype.decklist card.id) (EditSlot (ArchetypeList archetype.id) card.id)))
+                :: List.map
+                    (\archetype ->
+                        cell
+                            (slotInput
+                                (Decklist.slotValue archetype.decklist card.id)
+                                (EditSlot (ArchetypeList archetype.id) card.id)
+                                (targetId
+                                    (MatchupInput card.id archetype.id)
+                                )
+                            )
+                    )
                     model.archetypes
             )
         )
@@ -78,16 +89,17 @@ viewMaindeckSideboard model cardId =
             ]
         , colspan 2
         ]
-        [ slotInput (Decklist.slotValue model.maindeck cardId) (EditSlot Maindeck cardId)
+        [ slotInput (Decklist.slotValue model.maindeck cardId) (EditSlot Maindeck cardId) (targetId (MaindeckInput cardId))
         , div [ class "maindeck-sideboard-estimated" ]
             [ div [] [ text (recommendedMaindeckCountOfCard model cardId |> toFixed 2) ]
             , hr [] []
             , div [] [ text (toString (maxCountOfCard model cardId)) ]
             ]
-        , slotInput (Decklist.slotValue model.sideboard cardId) (EditSlot Sideboard cardId)
+        , slotInput (Decklist.slotValue model.sideboard cardId) (EditSlot Sideboard cardId) (targetId (SideboardInput cardId))
         ]
 
 
+slotsFulfilledByMaindeckSideboard : Model -> ID -> Bool
 slotsFulfilledByMaindeckSideboard model cardId =
     Decklist.slotValue model.maindeck cardId + Decklist.slotValue model.sideboard cardId == maxCountOfCard model cardId
 
@@ -172,8 +184,8 @@ cell html =
     td [] [ html ]
 
 
-slotInput : Int -> (Int -> Msg) -> Html Msg
-slotInput currentValue saveCountMsg =
+slotInput : Int -> (Int -> Msg) -> String -> Html Msg
+slotInput currentValue saveCountMsg elementId =
     let
         viewValue =
             case currentValue of
@@ -187,6 +199,8 @@ slotInput currentValue saveCountMsg =
             [ type' "number"
             , value viewValue
             , onInput (\input -> saveCountMsg (Result.withDefault 0 (String.toInt input)))
+            , onClick (FocusAndSelect elementId)
+            , id elementId
             ]
             []
 
