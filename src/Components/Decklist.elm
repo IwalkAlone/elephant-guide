@@ -45,3 +45,8 @@ decoder =
     JD.object2 (,) ("id" := JD.int) ("qty" := JD.int)
         |> JD.list
         |> JD.map Dict.fromList
+
+
+empty : Decklist
+empty =
+    Dict.empty

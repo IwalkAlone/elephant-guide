@@ -1,39 +1,13 @@
 port module Ports exposing (..)
 
-import Components.Card as Card exposing (..)
+import TableMetrics exposing (..)
+import Json.Encode as JE exposing (..)
 
 
-type alias ID =
-    Int
+port saveDeck : JE.Value -> Cmd msg
 
 
-type alias SavedDeckModel =
-    { archetypes : List SavedArchetypeModel
-    , cards : List Card.Model
-    , maindeck : List ( ID, Int )
-    , sideboard : List ( ID, Int )
-    , nextId : ID
-    }
-
-
-type alias SavedArchetypeModel =
-    { id : Int
-    , name : String
-    , weight : Float
-    , decklist : List ( ID, Int )
-    }
-
-
-type alias TableMetrics =
-    { tableTop : Float
-    , rowBottoms : List Float
-    }
-
-
-port saveDeck : SavedDeckModel -> Cmd msg
-
-
-port loadDeck : (SavedDeckModel -> msg) -> Sub msg
+port loadDeck : (JE.Value -> msg) -> Sub msg
 
 
 port requestTableMetrics : () -> Cmd msg

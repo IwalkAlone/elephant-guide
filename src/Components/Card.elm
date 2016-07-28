@@ -1,10 +1,11 @@
 module Components.Card exposing (..)
 
 import Html exposing (..)
-import Html.Attributes exposing (..)
+import Html.Attributes exposing (class, type', defaultValue)
 import Html.Events exposing (..)
 import Json.Encode as JE exposing (..)
 import Json.Decode as JD exposing (..)
+import Json.Decode.Pipeline exposing (required, hardcoded, decode)
 import ID exposing (..)
 
 
@@ -20,15 +21,6 @@ type Msg
     = StartEditing
     | Input String
     | FinishEditing
-
-
-initialModel : ID -> String -> Model
-initialModel id name =
-    { id = id
-    , name = name
-    , editing = False
-    , currentText = name
-    }
 
 
 update : Msg -> Model -> Model
@@ -64,4 +56,8 @@ encoder card =
 
 decoder : Decoder Model
 decoder =
-    JD.object2 initialModel ("id" := JD.int) ("name" := JD.string)
+    decode Model
+        |> required "id" JD.int
+        |> required "name" JD.string
+        |> hardcoded False
+        |> required "name" JD.string

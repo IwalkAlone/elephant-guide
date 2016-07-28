@@ -7,7 +7,8 @@ import Components.Decklist as Decklist exposing (..)
 import Dict
 import Json.Encode as JE exposing (..)
 import Json.Decode as JD exposing (..)
-import Ports exposing (TableMetrics)
+import Json.Decode.Pipeline exposing (required, hardcoded, decode)
+import TableMetrics exposing (..)
 
 
 type alias Model =
@@ -52,11 +53,11 @@ encoder model =
 
 decoder : Decoder Model
 decoder =
-    JD.object7 Model
-        ("archetypes" := JD.list Archetype.decoder)
-        ("cards" := JD.list Card.decoder)
-        ("maindeck" := Decklist.decoder)
-        ("sideboard" := Decklist.decoder)
-        ("nextId" := JD.int)
-        (JD.succeed Nothing)
-        (JD.succeed NotDragging)
+    decode Model
+        |> required "archetypes" (JD.list Archetype.decoder)
+        |> required "cards" (JD.list Card.decoder)
+        |> required "maindeck" Decklist.decoder
+        |> required "sideboard" Decklist.decoder
+        |> required "nextId" JD.int
+        |> hardcoded Nothing
+        |> hardcoded NotDragging

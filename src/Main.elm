@@ -3,13 +3,14 @@ module Main exposing (..)
 import Html exposing (..)
 import Html.App as Html
 import Html.Lazy exposing (..)
-import Dict exposing (..)
 import Components.Deck.Model as Deck exposing (..)
 import Components.Deck.Update as Deck exposing (..)
 import Components.Deck.View as Deck exposing (..)
 import Http
+import Json.Decode as JD exposing (..)
+import Json.Encode as JE exposing (..)
 import Task exposing (Task)
-import Ports exposing (..)
+import Ports
 
 
 main : Program Never
@@ -23,8 +24,8 @@ type alias Model =
 
 
 type Msg
-    = LoadDeck SavedDeckModel
-    | GetDeck Deck.Model
+    = LoadDeckFromLocalDb JE.Value
+    | GetDeckFromServer Deck.Model
     | GetDeckError Http.Error
     | DeckMsg Deck.Msg
     | NoOp
@@ -38,34 +39,26 @@ initialModel =
 
 init : Never -> ( Model, Cmd Msg )
 init flags =
-    ( initialModel, Task.perform GetDeckError GetDeck getDeck )
+    --( initialModel, Task.perform GetDeckError GetDeckFromServer getDeck )
+    ( initialModel, Cmd.none )
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
-        LoadDeck savedDeck ->
+        LoadDeckFromLocalDb deck ->
             let
-                loadArchetype savedArchetype =
-                    { id = savedArchetype.id
-                    , name = savedArchetype.name
-                    , weight = savedArchetype.weight
-                    , decklist = Dict.fromList savedArchetype.decklist
-                    }
-
-                loadedDeck =
-                    { archetypes = List.map loadArchetype savedDeck.archetypes
-                    , cards = savedDeck.cards
-                    , maindeck = Dict.fromList savedDeck.maindeck
-                    , sideboard = Dict.fromList savedDeck.sideboard
-                    , nextId = savedDeck.nextId
-                    , tableMetrics = Nothing
-                    , dragState = NotDragging
-                    }
+                deckResult =
+                    decodeValue Deck.decoder deck
             in
-                { model | deck = loadedDeck } ! []
+                case deckResult of
+                    Ok loadedDeck ->
+                        { model | deck = loadedDeck } ! []
 
-        GetDeck deck ->
+                    Err error ->
+                        model ! [ Task.perform GetDeckError GetDeckFromServer getDeck ]
+
+        GetDeckFromServer deck ->
             { model | deck = deck } ! []
 
         GetDeckError error ->
@@ -98,4 +91,4 @@ getDeck =
 
 subscriptions : Model -> Sub Msg
 subscriptions model =
-    Sub.map DeckMsg (Deck.subscriptions model.deck)
+    Sub.batch [ Ports.loadDeck LoadDeckFromLocalDb, Sub.map DeckMsg (Deck.subscriptions model.deck) ]

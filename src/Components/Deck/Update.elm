@@ -11,6 +11,7 @@ import Task exposing (Task)
 import Json.Encode as JE
 import Json.Decode as JD
 import Http
+import TableMetrics exposing (..)
 
 
 type DecklistKind
@@ -27,7 +28,7 @@ type Msg
     | DragStart Int
     | DragMove Mouse.Position
     | DragEnd Mouse.Position
-    | ReceivedTableMetrics Ports.TableMetrics
+    | ReceivedTableMetrics TableMetrics
     | FocusAndSelect String
     | ArchetypeMsg ID Archetype.Msg
     | CardMsg ID Card.Msg
@@ -40,7 +41,7 @@ update msg model =
         AddArchetype ->
             withSave
                 { model
-                    | archetypes = model.archetypes ++ [ { id = model.nextId, name = "New Archetype", weight = 0, decklist = Dict.empty } ]
+                    | archetypes = model.archetypes ++ [ { id = model.nextId, name = "New Archetype", weight = 0, decklist = Dict.empty, drawDiff = Dict.empty } ]
                     , nextId = model.nextId + 1
                 }
 
@@ -53,7 +54,7 @@ update msg model =
         AddCard ->
             withSave
                 { model
-                    | cards = model.cards ++ [ Card.initialModel model.nextId "New Card" ]
+                    | cards = model.cards ++ [ Card.Model model.nextId "New Card" False "New Card" ]
                     , nextId = model.nextId + 1
                 }
 
@@ -175,23 +176,7 @@ splice1 fromIndex toIndex list =
 
 saveDeck : Model -> Cmd Msg
 saveDeck model =
-    let
-        saveArchetype archetype =
-            { id = archetype.id
-            , weight = archetype.weight
-            , name = archetype.name
-            , decklist = Dict.toList archetype.decklist
-            }
-
-        saveDeckModel =
-            { archetypes = List.map saveArchetype model.archetypes
-            , cards = model.cards
-            , nextId = model.nextId
-            , maindeck = Dict.toList model.maindeck
-            , sideboard = Dict.toList model.sideboard
-            }
-    in
-        Cmd.batch [ Task.perform (always NoOp) (always NoOp) (postDeck model), Ports.saveDeck saveDeckModel ]
+    Cmd.batch [ Task.perform (always NoOp) (always NoOp) (postDeck model), Ports.saveDeck (Model.encoder model) ]
 
 
 postDeck : Model -> Task Http.Error String
