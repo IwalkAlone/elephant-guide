@@ -9,6 +9,7 @@ import Json.Encode as JE exposing (..)
 import Json.Decode as JD exposing (..)
 import Json.Decode.Pipeline exposing (required, hardcoded, decode)
 import TableMetrics exposing (..)
+import Slot exposing (..)
 
 
 type alias Model =
@@ -17,15 +18,21 @@ type alias Model =
     , maindeck : Decklist
     , sideboard : Decklist
     , nextId : ID
-    , tableMetrics :
-        Maybe TableMetrics
+    , tableMetrics : Maybe TableMetrics
     , dragState : DragState
+    , slotEdit : Maybe SlotEdit
     }
 
 
 type DragState
     = NotDragging
     | Dragging Int Int
+
+
+type alias SlotEdit =
+    { slot : Slot
+    , value : String
+    }
 
 
 initialModel : Model
@@ -37,6 +44,7 @@ initialModel =
     , nextId = 1
     , tableMetrics = Nothing
     , dragState = NotDragging
+    , slotEdit = Nothing
     }
 
 
@@ -61,3 +69,4 @@ decoder =
         |> required "nextId" JD.int
         |> hardcoded Nothing
         |> hardcoded NotDragging
+        |> hardcoded Nothing

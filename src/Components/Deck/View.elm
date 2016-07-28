@@ -14,6 +14,7 @@ import Html.Keyed exposing (..)
 import String
 import ToFixed exposing (toFixed)
 import DomManipulation exposing (..)
+import Slot exposing (..)
 
 
 view : Model -> Html Msg
@@ -67,17 +68,35 @@ viewLine model index card =
                 :: List.map
                     (\archetype ->
                         cell
-                            (slotInput
-                                (Decklist.slotValue archetype.decklist card.id)
-                                (EditSlot (ArchetypeList archetype.id) card.id)
+                            (archetypeSlotInput
+                                (Slot card.id archetype.id)
+                                (currentSlotDisplayValue model archetype card.id)
+                                (Archetype.slotDisplayValue archetype card.id)
                                 (targetId
-                                    (MatchupInput card.id archetype.id)
+                                    (MatchupInput (Slot card.id archetype.id))
                                 )
                             )
                     )
                     model.archetypes
             )
         )
+
+
+currentSlotDisplayValue : Model -> Archetype.Model -> ID -> String
+currentSlotDisplayValue model archetype cardId =
+    let
+        displayValue =
+            Archetype.slotDisplayValue archetype cardId
+    in
+        case model.slotEdit of
+            Nothing ->
+                displayValue
+
+            Just { slot, value } ->
+                if slot == Slot cardId archetype.id then
+                    value
+                else
+                    displayValue
 
 
 viewMaindeckSideboard : Model -> ID -> Html Msg
@@ -203,6 +222,20 @@ slotInput currentValue saveCountMsg elementId =
             , id elementId
             ]
             []
+
+
+archetypeSlotInput : Slot -> String -> String -> String -> Html Msg
+archetypeSlotInput slot currentValue initialEditValue elementId =
+    input
+        [ type' "text"
+        , onFocus (ArchetypeSlotStartEditing (SlotEdit slot initialEditValue))
+        , onInput (ArchetypeSlotInput slot)
+        , onBlur (ArchetypeSlotFinishEditing slot)
+        , onClick (FocusAndSelect elementId)
+        , value currentValue
+        , id elementId
+        ]
+        []
 
 
 keyedTable : List (Attribute a) -> List ( String, Html a ) -> Html a

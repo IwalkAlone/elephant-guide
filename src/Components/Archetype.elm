@@ -7,7 +7,10 @@ import String exposing (toFloat)
 import Components.Decklist as Decklist exposing (..)
 import Json.Encode as JE exposing (..)
 import Json.Decode as JD exposing (..)
-import Json.Decode.Pipeline exposing (required, decode)
+import Json.Decode.Pipeline exposing (required, hardcoded, decode)
+import Dict exposing (..)
+import ID exposing (..)
+import Slot exposing (..)
 
 
 type alias Model =
@@ -15,7 +18,9 @@ type alias Model =
     , name : String
     , weight : Float
     , decklist : Decklist
-    , drawDiff : Decklist
+    , differenceOnTheDraw :
+        Decklist
+        --, slotInputContents : Dict ID String
     }
 
 
@@ -50,6 +55,24 @@ viewWeight model =
         []
 
 
+setCardCounts : Model -> ID -> ( Int, Int ) -> Model
+setCardCounts archetype cardId ( countOnThePlay, differenceOnTheDraw ) =
+    { archetype | decklist = Dict.insert cardId countOnThePlay archetype.decklist, differenceOnTheDraw = Dict.insert cardId differenceOnTheDraw archetype.differenceOnTheDraw }
+
+
+slotDisplayValue : Model -> ID -> String
+slotDisplayValue archetype cardId =
+    Slot.display
+        (Decklist.slotValue
+            archetype.decklist
+            cardId
+        )
+        (Decklist.slotValue
+            archetype.differenceOnTheDraw
+            cardId
+        )
+
+
 encoder : Model -> JE.Value
 encoder archetype =
     JE.object
@@ -65,8 +88,8 @@ encoder archetype =
         , ( "decklist"
           , Decklist.encoder archetype.decklist
           )
-        , ( "drawDiff"
-          , Decklist.encoder archetype.drawDiff
+        , ( "differenceOnTheDraw"
+          , Decklist.encoder archetype.differenceOnTheDraw
           )
         ]
 
@@ -78,4 +101,4 @@ decoder =
         |> required "name" JD.string
         |> required "weight" JD.float
         |> required "decklist" Decklist.decoder
-        |> required "drawDiff" Decklist.decoder
+        |> required "differenceOnTheDraw" Decklist.decoder

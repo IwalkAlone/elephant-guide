@@ -12,6 +12,7 @@ import Json.Encode as JE
 import Json.Decode as JD
 import Http
 import TableMetrics exposing (..)
+import Slot exposing (..)
 
 
 type DecklistKind
@@ -30,6 +31,9 @@ type Msg
     | DragEnd Mouse.Position
     | ReceivedTableMetrics TableMetrics
     | FocusAndSelect String
+    | ArchetypeSlotStartEditing SlotEdit
+    | ArchetypeSlotInput Slot String
+    | ArchetypeSlotFinishEditing Slot
     | ArchetypeMsg ID Archetype.Msg
     | CardMsg ID Card.Msg
     | NoOp
@@ -41,7 +45,7 @@ update msg model =
         AddArchetype ->
             withSave
                 { model
-                    | archetypes = model.archetypes ++ [ { id = model.nextId, name = "New Archetype", weight = 0, decklist = Dict.empty, drawDiff = Dict.empty } ]
+                    | archetypes = model.archetypes ++ [ { id = model.nextId, name = "New Archetype", weight = 0, decklist = Dict.empty, differenceOnTheDraw = Dict.empty } ]
                     , nextId = model.nextId + 1
                 }
 
@@ -139,6 +143,32 @@ update msg model =
 
         FocusAndSelect elementId ->
             model ! [ Ports.focusAndSelect elementId ]
+
+        ArchetypeSlotStartEditing slotEdit ->
+            { model | slotEdit = Just slotEdit } ! []
+
+        ArchetypeSlotInput { cardId, archetypeId } input ->
+            case model.slotEdit of
+                Nothing ->
+                    model ! []
+
+                Just { slot, value } ->
+                    { model | slotEdit = Just (SlotEdit slot input) } ! []
+
+        ArchetypeSlotFinishEditing { cardId, archetypeId } ->
+            case model.slotEdit of
+                Nothing ->
+                    model ! []
+
+                Just { slot, value } ->
+                    let
+                        updateArchetype archetype =
+                            if archetype.id == slot.archetypeId then
+                                Archetype.setCardCounts archetype slot.cardId (Slot.parsePlayDraw value)
+                            else
+                                archetype
+                    in
+                        withSave { model | slotEdit = Nothing, archetypes = List.map updateArchetype model.archetypes }
 
         NoOp ->
             model ! []
