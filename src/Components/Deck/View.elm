@@ -71,7 +71,13 @@ viewLine model index card =
 
 viewMaindeckSideboard : Model -> ID -> Html Msg
 viewMaindeckSideboard model cardId =
-    td [ class "maindeck-sideboard-cell", colspan 2 ]
+    td
+        [ classList
+            [ ( "maindeck-sideboard-cell", True )
+            , ( "maindeck-sideboard-cell-invalid", not (slotsFulfilledByMaindeckSideboard model cardId) )
+            ]
+        , colspan 2
+        ]
         [ slotInput (Decklist.slotValue model.maindeck cardId) (EditSlot Maindeck cardId)
         , div [ class "maindeck-sideboard-estimated" ]
             [ div [] [ text (recommendedMaindeckCountOfCard model cardId |> toFixed 2) ]
@@ -80,6 +86,10 @@ viewMaindeckSideboard model cardId =
             ]
         , slotInput (Decklist.slotValue model.sideboard cardId) (EditSlot Sideboard cardId)
         ]
+
+
+slotsFulfilledByMaindeckSideboard model cardId =
+    Decklist.slotValue model.maindeck cardId + Decklist.slotValue model.sideboard cardId == maxCountOfCard model cardId
 
 
 recommendedMaindeckCountOfCard : Model -> ID -> Float

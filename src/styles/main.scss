@@ -66,6 +66,10 @@ input {
         display: inline-block;
         font-size: 10px;
     }
+
+    &.maindeck-sideboard-cell-invalid {
+        background-color: red;
+    }
 }
 
 .drop-target-above {
