@@ -127,7 +127,7 @@ recommendedMaindeckCountOfCard : Model -> ID -> Float
 recommendedMaindeckCountOfCard model cardId =
     let
         weightedCounts =
-            List.map (\archetype -> (toFloat (Decklist.slotValue archetype.decklist cardId) * archetype.weight)) model.archetypes
+            List.map (Archetype.weightedCardCount cardId) model.archetypes
 
         totalWeight =
             model.archetypes
@@ -152,7 +152,7 @@ maxCountOfCard : Model -> ID -> Int
 maxCountOfCard model cardId =
     let
         counts =
-            List.map (\archetype -> Decklist.slotValue archetype.decklist cardId) model.archetypes
+            List.map (Archetype.maxCardCount cardId) model.archetypes
     in
         Maybe.withDefault 0 (List.maximum counts)
 

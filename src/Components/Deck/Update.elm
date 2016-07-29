@@ -16,8 +16,7 @@ import Slot exposing (..)
 
 
 type DecklistKind
-    = ArchetypeList ID
-    | Maindeck
+    = Maindeck
     | Sideboard
 
 
@@ -66,16 +65,6 @@ update msg model =
             let
                 newModel =
                     case decklistKind of
-                        ArchetypeList archetypeId ->
-                            let
-                                updateArchetype archetype =
-                                    if archetype.id == archetypeId then
-                                        { archetype | decklist = Dict.insert cardId newValue archetype.decklist }
-                                    else
-                                        archetype
-                            in
-                                { model | archetypes = List.map updateArchetype model.archetypes }
-
                         Maindeck ->
                             { model | maindeck = Dict.insert cardId newValue model.maindeck }
 

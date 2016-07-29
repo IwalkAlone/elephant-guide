@@ -18,9 +18,7 @@ type alias Model =
     , name : String
     , weight : Float
     , decklist : Decklist
-    , differenceOnTheDraw :
-        Decklist
-        --, slotInputContents : Dict ID String
+    , differenceOnTheDraw : Decklist
     }
 
 
@@ -71,6 +69,55 @@ slotDisplayValue archetype cardId =
             archetype.differenceOnTheDraw
             cardId
         )
+
+
+decklistOnTheDraw : Model -> Decklist
+decklistOnTheDraw archetype =
+    let
+        differences : List ( ID, Int )
+        differences =
+            Dict.filter (\cardId diff -> diff /= 0) archetype.differenceOnTheDraw |> Dict.toList
+
+        updateCard : ( ID, Int ) -> Decklist -> Decklist
+        updateCard ( cardId, diff ) decklist =
+            Dict.insert cardId (Decklist.slotValue decklist cardId + diff) decklist
+    in
+        List.foldr updateCard archetype.decklist differences
+
+
+decklists : Model -> List Decklist
+decklists archetype =
+    if (hasDifferencesOnTheDraw archetype) then
+        [ archetype.decklist, decklistOnTheDraw archetype ]
+    else
+        [ archetype.decklist ]
+
+
+hasDifferencesOnTheDraw : Model -> Bool
+hasDifferencesOnTheDraw archetype =
+    archetype.differenceOnTheDraw
+        |> Dict.toList
+        |> List.any (\( cardId, diff ) -> diff /= 0)
+
+
+countOnThePlay : ID -> Model -> Int
+countOnThePlay cardId archetype =
+    Decklist.slotValue archetype.decklist cardId
+
+
+countOnTheDraw : ID -> Model -> Int
+countOnTheDraw cardId archetype =
+    Decklist.slotValue archetype.differenceOnTheDraw cardId + countOnThePlay cardId archetype
+
+
+maxCardCount : ID -> Model -> Int
+maxCardCount cardId archetype =
+    max (countOnThePlay cardId archetype) (countOnTheDraw cardId archetype)
+
+
+weightedCardCount : ID -> Model -> Float
+weightedCardCount cardId archetype =
+    archetype.weight * Basics.toFloat (countOnThePlay cardId archetype + countOnTheDraw cardId archetype) / 2
 
 
 encoder : Model -> JE.Value
