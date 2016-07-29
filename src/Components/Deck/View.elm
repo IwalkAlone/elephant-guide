@@ -5,6 +5,7 @@ import Components.Deck.Update as Update exposing (..)
 import Components.Archetype as Archetype
 import Components.Card as Card
 import Components.Decklist as Decklist exposing (..)
+import Components.SideboardPlan exposing (..)
 import ID exposing (..)
 import Html exposing (..)
 import Html.App as Html
@@ -19,8 +20,10 @@ import Slot exposing (..)
 
 view : Model -> Html Msg
 view model =
-    keyedTable []
-        ([ ( "$Header", viewHeader model ) ] ++ viewLines model ++ [ ( "$AddCard", viewAddCard ) ])
+    div []
+        (keyedTable [] ([ ( "$Header", viewHeader model ) ] ++ viewLines model ++ [ ( "$AddCard", viewAddCard ) ])
+            :: (List.map (\archetype -> viewSideboardPlan archetype.name (sideboardPlan model archetype.decklist)) model.archetypes)
+        )
 
 
 viewHeader : Model -> Html Msg
