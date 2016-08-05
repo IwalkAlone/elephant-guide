@@ -22,7 +22,7 @@ view : Model -> Html Msg
 view model =
     div []
         (keyedTable [] ([ ( "$Header", viewHeader model ) ] ++ viewLines model ++ [ ( "$AddCard", viewAddCard ) ])
-            :: (List.map (\archetype -> viewSideboardPlan archetype.name (sideboardPlan model archetype.decklist)) model.archetypes)
+            :: (List.map (\archetype -> viewSideboardPlans model archetype) model.archetypes)
         )
 
 

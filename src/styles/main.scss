@@ -81,3 +81,8 @@ input {
 .dragging {
     background-color: lightgray;
 }
+
+.separate-sideboard-plans-for-play-draw div {
+    display: inline-block;
+    vertical-align: top;
+}

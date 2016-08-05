@@ -4,27 +4,35 @@ import Components.Deck.Model as Deck exposing (..)
 import Components.Archetype as Archetype exposing (..)
 import Components.Decklist as Decklist exposing (..)
 import Html exposing (..)
+import Html.Attributes exposing (class)
 import String
 
 
 viewSideboardPlans : Deck.Model -> Archetype.Model -> Html msg
 viewSideboardPlans deck archetype =
     let
-        a =
-            1
+        planOnThePlay =
+            viewSideboardPlan (sideboardPlan deck archetype.decklist)
     in
         if Archetype.hasDifferencesOnTheDraw archetype then
-            div [] []
+            let
+                planOnTheDraw =
+                    viewSideboardPlan (sideboardPlan deck (Archetype.decklistOnTheDraw archetype))
+            in
+                div []
+                    [ h1 [] [ text archetype.name ]
+                    , div [ class "separate-sideboard-plans-for-play-draw" ]
+                        [ div [] [ h3 [] [ text "On the play:" ], planOnThePlay ]
+                        , div [] [ h3 [] [ text "On the draw:" ], planOnTheDraw ]
+                        ]
+                    ]
         else
-            div [] []
+            div [] [ h1 [] [ text archetype.name ], planOnThePlay ]
 
 
-viewSideboardPlan : String -> List ( String, Int ) -> Html msg
-viewSideboardPlan name exchanges =
-    div []
-        [ h1 [] [ text name ]
-        , ul [] (List.map (\item -> li [] [ text (displaySideboardPlanItem item) ]) exchanges)
-        ]
+viewSideboardPlan : List ( String, Int ) -> Html msg
+viewSideboardPlan exchanges =
+    ul [] (List.map (\item -> li [] [ text (displaySideboardPlanItem item) ]) exchanges)
 
 
 sideboardPlan : Deck.Model -> Decklist -> List ( String, Int )
