@@ -4,8 +4,9 @@ import Components.Deck.Model as Deck exposing (..)
 import Components.Archetype as Archetype exposing (..)
 import Components.Decklist as Decklist exposing (..)
 import Html exposing (..)
-import Html.Attributes exposing (class)
+import Html.Attributes exposing (id, class, href)
 import String
+import DomManipulation exposing (..)
 
 
 viewSideboardPlans : Deck.Model -> Archetype.Model -> Html msg
@@ -13,6 +14,9 @@ viewSideboardPlans deck archetype =
     let
         planOnThePlay =
             viewSideboardPlan (sideboardPlan deck archetype.decklist)
+
+        mainHeader =
+            h1 [ id (targetId (ArchetypeSideboardPlanAnchor archetype.id)) ] [ text archetype.name, a [ href "#" ] [ text "back to top" ] ]
     in
         if Archetype.hasDifferencesOnTheDraw archetype then
             let
@@ -20,14 +24,14 @@ viewSideboardPlans deck archetype =
                     viewSideboardPlan (sideboardPlan deck (Archetype.decklistOnTheDraw archetype))
             in
                 div []
-                    [ h1 [] [ text archetype.name ]
+                    [ mainHeader
                     , div [ class "separate-sideboard-plans-for-play-draw" ]
                         [ div [] [ h3 [] [ text "On the play:" ], planOnThePlay ]
                         , div [] [ h3 [] [ text "On the draw:" ], planOnTheDraw ]
                         ]
                     ]
         else
-            div [] [ h1 [] [ text archetype.name ], planOnThePlay ]
+            div [] [ mainHeader, planOnThePlay ]
 
 
 viewSideboardPlan : List ( String, Int ) -> Html msg

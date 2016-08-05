@@ -9,6 +9,7 @@ type Element
     = MaindeckInput ID
     | SideboardInput ID
     | MatchupInput Slot
+    | ArchetypeSideboardPlanAnchor ID
 
 
 targetId : Element -> String
@@ -22,6 +23,9 @@ targetId element =
 
         MatchupInput { cardId, archetypeId } ->
             "maindeck-input-for-card-" ++ toString cardId ++ "-archetype-" ++ toString archetypeId
+
+        ArchetypeSideboardPlanAnchor archetypeId ->
+            "sideboard-plan-" ++ toString archetypeId
 
 
 focusAndSelect : Element -> Cmd msg

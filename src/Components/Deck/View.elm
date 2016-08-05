@@ -179,6 +179,7 @@ viewArchetype model archetype =
         (td [ class "archetype-cell" ]
             [ div [] [ Html.map (ArchetypeMsg archetype.id) (Archetype.viewName archetype) ]
             , div [] ((Html.map (ArchetypeMsg archetype.id) (Archetype.viewWeight archetype)) :: cardCountElements)
+            , div [] [ a [ href ("#" ++ targetId (ArchetypeSideboardPlanAnchor archetype.id)) ] [ text "Preview" ] ]
             ]
         )
 
