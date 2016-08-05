@@ -172,11 +172,15 @@ viewAddArchetype =
 
 viewArchetype : Model -> Archetype.Model -> Html Msg
 viewArchetype model archetype =
-    (td [ class "archetype-cell" ]
-        [ div [] [ Html.map (ArchetypeMsg archetype.id) (Archetype.viewName archetype) ]
-        , div [] [ Html.map (ArchetypeMsg archetype.id) (Archetype.viewWeight archetype), viewCardCount (Decklist.cardCount archetype.decklist) 60 ]
-        ]
-    )
+    let
+        cardCountElements =
+            List.map (\decklist -> viewCardCount (Decklist.cardCount decklist) 60) (Archetype.decklists archetype)
+    in
+        (td [ class "archetype-cell" ]
+            [ div [] [ Html.map (ArchetypeMsg archetype.id) (Archetype.viewName archetype) ]
+            , div [] ((Html.map (ArchetypeMsg archetype.id) (Archetype.viewWeight archetype)) :: cardCountElements)
+            ]
+        )
 
 
 viewDecklistHeader : Decklist -> String -> Int -> Html Msg
