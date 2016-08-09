@@ -39,8 +39,11 @@ initialModel =
 
 init : Never -> ( Model, Cmd Msg )
 init flags =
-    --( initialModel, Task.perform GetDeckError GetDeckFromServer getDeck )
-    ( initialModel, Cmd.none )
+    ( initialModel, Task.perform GetDeckError GetDeckFromServer getDeck )
+
+
+
+--( initialModel, Cmd.none )
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
