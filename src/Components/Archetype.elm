@@ -120,6 +120,11 @@ weightedCardCount cardId archetype =
     archetype.weight * Basics.toFloat (countOnThePlay cardId archetype + countOnTheDraw cardId archetype) / 2
 
 
+deleteCard : ID -> Model -> Model
+deleteCard cardId archetype =
+    { archetype | decklist = Dict.remove cardId archetype.decklist, differenceOnTheDraw = Dict.remove cardId archetype.differenceOnTheDraw }
+
+
 encoder : Model -> JE.Value
 encoder archetype =
     JE.object

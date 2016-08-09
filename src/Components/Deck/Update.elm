@@ -24,6 +24,7 @@ type Msg
     = AddArchetype
     | DeleteArchetype ID
     | AddCard
+    | DeleteCard ID
     | EditSlot DecklistKind ID Int
     | DragStart Int
     | DragMove Mouse.Position
@@ -59,6 +60,13 @@ update msg model =
                 { model
                     | cards = model.cards ++ [ Card.Model model.nextId "New Card" False "New Card" ]
                     , nextId = model.nextId + 1
+                }
+
+        DeleteCard cardId ->
+            withSave
+                { model
+                    | cards = List.filter (\card -> card.id /= cardId) model.cards
+                    , archetypes = List.map (Archetype.deleteCard cardId) model.archetypes
                 }
 
         EditSlot decklistKind cardId newValue ->

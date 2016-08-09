@@ -10,7 +10,7 @@ var app = Elm.Main.embed( document.getElementById( 'main' ) );
 localForage.getItem('deck', function (err, value) {
     if (!err && value) {
         setTimeout(function () {
-            app.ports.loadDeck.send(value);
+            //app.ports.loadDeck.send(value);
         });
     }
     app.ports.saveDeck.subscribe(function (deck) {

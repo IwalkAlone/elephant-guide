@@ -162,7 +162,7 @@ maxCountOfCard model cardId =
 
 viewCard : Card.Model -> Int -> Html Msg
 viewCard model index =
-    (td [ class "card-cell", onMouseDown (DragStart index) ] [ Html.map (CardMsg model.id) (Card.view model) ])
+    (td [ class "card-cell", onMouseDown (DragStart index) ] [ Html.map (CardMsg model.id) (Card.view model), div [ onClick (DeleteCard model.id) ] [ text "Del" ] ])
 
 
 viewAddArchetype : Html Msg

@@ -17,10 +17,14 @@ input {
     border: none;
 }
 .card-cell {
-    width: 160px;
+    width: 250px;
     input {
         text-align: left;
         width: 160px;
+    }
+    div {
+      display: inline-block;
+      margin-left: 10px;
     }
 }
 .archetype-cell {
