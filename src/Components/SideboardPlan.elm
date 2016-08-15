@@ -16,7 +16,7 @@ viewSideboardPlans deck archetype =
             viewSideboardPlan (sideboardPlan deck archetype.decklist)
 
         mainHeader =
-            h1 [ id (targetId (ArchetypeSideboardPlanAnchor archetype.id)) ] [ text archetype.name, a [ href "#" ] [ text "back to top" ] ]
+            h1 [ id (targetId (ArchetypeSideboardPlanAnchor archetype.id)) ] [ text archetype.name ]
     in
         if Archetype.hasDifferencesOnTheDraw archetype then
             let
