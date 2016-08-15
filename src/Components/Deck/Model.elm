@@ -21,7 +21,7 @@ type alias Model =
     , nextId : ID
     , tableMetrics : Maybe TableMetrics
     , dragState : DragState
-    , slotEdit : Maybe SlotEdit
+    , editState : EditState
     , tab : Int
     , mdl : Material.Model
     }
@@ -32,10 +32,10 @@ type DragState
     | Dragging Int Int
 
 
-type alias SlotEdit =
-    { slot : Slot
-    , value : String
-    }
+type EditState
+    = NotEditing
+    | EditingCardName ID String
+    | EditingArchetypeSlot Slot String
 
 
 initialModel : Model
@@ -47,7 +47,7 @@ initialModel =
     , nextId = 1
     , tableMetrics = Nothing
     , dragState = NotDragging
-    , slotEdit = Nothing
+    , editState = NotEditing
     , tab = 0
     , mdl = Material.model
     }
@@ -74,6 +74,6 @@ decoder =
         |> required "nextId" JD.int
         |> hardcoded Nothing
         |> hardcoded NotDragging
-        |> hardcoded Nothing
+        |> hardcoded NotEditing
         |> hardcoded 0
         |> hardcoded Material.model

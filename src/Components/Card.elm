@@ -12,38 +12,7 @@ import ID exposing (..)
 type alias Model =
     { id : ID
     , name : String
-    , editing : Bool
-    , currentText : String
     }
-
-
-type Msg
-    = StartEditing
-    | Input String
-    | FinishEditing
-
-
-update : Msg -> Model -> Model
-update msg model =
-    case msg of
-        StartEditing ->
-            { model | editing = True }
-
-        Input input ->
-            { model | currentText = input }
-
-        FinishEditing ->
-            { model | name = model.currentText, editing = False }
-
-
-view : Model -> Html Msg
-view model =
-    div [ class "card" ]
-        [ if model.editing then
-            input [ class "card-name", type' "text", defaultValue model.name, onInput Input, onBlur FinishEditing ] []
-          else
-            span [ class "card-name", onDoubleClick StartEditing ] [ text model.name ]
-        ]
 
 
 encoder : Model -> JE.Value
@@ -58,6 +27,4 @@ decoder : Decoder Model
 decoder =
     decode Model
         |> required "id" JD.int
-        |> required "name" JD.string
-        |> hardcoded False
         |> required "name" JD.string

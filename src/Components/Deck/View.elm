@@ -16,11 +16,8 @@ import String
 import ToFixed exposing (toFixed)
 import DomManipulation exposing (..)
 import Slot exposing (..)
-import Material.Layout as Layout exposing (render, row, title)
-import Material.Tabs as Tabs exposing (render, ripple, onSelectTab, activeTab, textLabel)
-
-
---import Material.Table as Table exposing (table, thead, tbody, tr, th, td)
+import Material.Layout as Layout
+import Material.Icon as Icon
 
 
 view : Model -> Html Msg
@@ -35,7 +32,9 @@ view model =
     in
         Layout.render Mdl
             model.mdl
-            []
+            [ Layout.selectedTab model.tab
+            , Layout.onSelectTab SelectTab
+            ]
             { header =
                 [ Layout.row []
                     [ Layout.title [] [ text "Elephant Guide" ]
@@ -50,26 +49,14 @@ view model =
                     , Layout.link [] [ a [] [ text "BG Delirium" ] ]
                     ]
                 ]
-            , tabs = ( [], [] )
+            , tabs = ( [ text "Elephant", text "Plan preview" ], [] )
             , main =
-                [ Tabs.render Mdl
-                    [ 0 ]
-                    model.mdl
-                    [ Tabs.ripple
-                    , Tabs.onSelectTab SelectTab
-                    , Tabs.activeTab model.tab
-                    ]
-                    [ Tabs.textLabel [] "Elephant"
-                    , Tabs.textLabel [] "Plan preview"
-                    ]
-                    (case model.tab of
-                        0 ->
-                            [ elephant ]
+                case model.tab of
+                    0 ->
+                        [ elephant ]
 
-                        _ ->
-                            sideboardPlans
-                    )
-                ]
+                    _ ->
+                        sideboardPlans
             }
 
 
@@ -113,7 +100,7 @@ viewLine model index card =
         ( "$Card" ++ card.name
         , tr
             [ classList classes ]
-            (viewCard card index
+            (viewCard model card index
                 :: viewMaindeckSideboard model card.id
                 :: List.map
                     (\archetype ->
@@ -138,15 +125,15 @@ currentSlotDisplayValue model archetype cardId =
         displayValue =
             Archetype.slotDisplayValue archetype cardId
     in
-        case model.slotEdit of
-            Nothing ->
-                displayValue
-
-            Just { slot, value } ->
+        case model.editState of
+            EditingArchetypeSlot slot value ->
                 if slot == Slot cardId archetype.id then
                     value
                 else
                     displayValue
+
+            _ ->
+                displayValue
 
 
 viewMaindeckSideboard : Model -> ID -> Html Msg
@@ -207,9 +194,41 @@ maxCountOfCard model cardId =
         Maybe.withDefault 0 (List.maximum counts)
 
 
-viewCard : Card.Model -> Int -> Html Msg
-viewCard model index =
-    (td [ class "card-cell", onMouseDown (DragStart index) ] [ Html.map (CardMsg model.id) (Card.view model), div [ onClick (DeleteCard model.id) ] [ text "Del" ] ])
+viewCard : Model -> Card.Model -> Int -> Html Msg
+viewCard model card index =
+    let
+        editingThisCard =
+            case model.editState of
+                EditingCardName cardId value ->
+                    cardId == card.id
+
+                _ ->
+                    False
+
+        cardNameInput =
+            input [ class "card-name", type' "text", defaultValue card.name, onInput (EditCardName card.id), onBlur CommitCardName ] []
+
+        cardNameSpan =
+            span [ class "card-name" ] [ text card.name ]
+    in
+        (td
+            (class "card-cell"
+                :: (if not editingThisCard then
+                        [ onMouseDown (DragStart index) ]
+                    else
+                        []
+                   )
+            )
+            [ div [ onClick (DeleteCard card.id) ] [ Icon.i "delete" ]
+            , div [ onClick (EditCardName card.id card.name) ] [ Icon.i "create" ]
+            , div [ class "card" ]
+                [ if editingThisCard then
+                    cardNameInput
+                  else
+                    cardNameSpan
+                ]
+            ]
+        )
 
 
 viewAddArchetype : Html Msg
@@ -283,9 +302,9 @@ archetypeSlotInput : Slot -> String -> String -> String -> Html Msg
 archetypeSlotInput slot currentValue initialEditValue elementId =
     input
         [ type' "text"
-        , onFocus (ArchetypeSlotStartEditing (SlotEdit slot initialEditValue))
-        , onInput (ArchetypeSlotInput slot)
-        , onBlur (ArchetypeSlotFinishEditing slot)
+        , onFocus (EditArchetypeSlot slot initialEditValue)
+        , onInput (EditArchetypeSlot slot)
+        , onBlur (CommitArchetypeSlot)
         , onClick (FocusAndSelect elementId)
         , value currentValue
         , id elementId

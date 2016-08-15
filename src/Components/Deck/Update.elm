@@ -25,6 +25,8 @@ type Msg
     = AddArchetype
     | DeleteArchetype ID
     | AddCard
+    | EditCardName ID String
+    | CommitCardName
     | DeleteCard ID
     | EditSlot DecklistKind ID Int
     | SelectTab Int
@@ -33,11 +35,9 @@ type Msg
     | DragEnd Mouse.Position
     | ReceivedTableMetrics TableMetrics
     | FocusAndSelect String
-    | ArchetypeSlotStartEditing SlotEdit
-    | ArchetypeSlotInput Slot String
-    | ArchetypeSlotFinishEditing Slot
+    | EditArchetypeSlot Slot String
+    | CommitArchetypeSlot
     | ArchetypeMsg ID Archetype.Msg
-    | CardMsg ID Card.Msg
     | Mdl (Material.Msg Msg)
     | NoOp
 
@@ -66,9 +66,28 @@ update msg model =
         AddCard ->
             withSave
                 { model
-                    | cards = model.cards ++ [ Card.Model model.nextId "New Card" False "New Card" ]
+                    | cards = model.cards ++ [ Card.Model model.nextId "New Card" ]
                     , nextId = model.nextId + 1
                 }
+
+        EditCardName cardId input ->
+            { model | editState = EditingCardName cardId input } ! []
+
+        CommitCardName ->
+            case model.editState of
+                EditingCardName cardId value ->
+                    let
+                        updateCard card =
+                            if card.id == cardId then
+                                { card | name = value }
+                            else
+                                card
+                    in
+                        withSave
+                            { model | cards = List.map updateCard model.cards, editState = NotEditing }
+
+                _ ->
+                    model ! []
 
         DeleteCard cardId ->
             withSave
@@ -101,16 +120,6 @@ update msg model =
                         archetype
             in
                 withSave { model | archetypes = List.map updateArchetype model.archetypes }
-
-        CardMsg id msg ->
-            let
-                updateCard card =
-                    if card.id == id then
-                        Card.update msg card
-                    else
-                        card
-            in
-                withSave { model | cards = List.map updateCard model.cards }
 
         DragStart index ->
             { model | dragState = Dragging index index } ! [ Ports.requestTableMetrics () ]
@@ -152,31 +161,23 @@ update msg model =
         FocusAndSelect elementId ->
             model ! [ Ports.focusAndSelect elementId ]
 
-        ArchetypeSlotStartEditing slotEdit ->
-            { model | slotEdit = Just slotEdit } ! []
+        EditArchetypeSlot slot input ->
+            { model | editState = EditingArchetypeSlot slot input } ! []
 
-        ArchetypeSlotInput { cardId, archetypeId } input ->
-            case model.slotEdit of
-                Nothing ->
-                    model ! []
-
-                Just { slot, value } ->
-                    { model | slotEdit = Just (SlotEdit slot input) } ! []
-
-        ArchetypeSlotFinishEditing { cardId, archetypeId } ->
-            case model.slotEdit of
-                Nothing ->
-                    model ! []
-
-                Just { slot, value } ->
+        CommitArchetypeSlot ->
+            case model.editState of
+                EditingArchetypeSlot { cardId, archetypeId } value ->
                     let
                         updateArchetype archetype =
-                            if archetype.id == slot.archetypeId then
-                                Archetype.setCardCounts archetype slot.cardId (Slot.parsePlayDraw value)
+                            if archetype.id == archetypeId then
+                                Archetype.setCardCounts archetype cardId (Slot.parsePlayDraw value)
                             else
                                 archetype
                     in
-                        withSave { model | slotEdit = Nothing, archetypes = List.map updateArchetype model.archetypes }
+                        withSave { model | editState = NotEditing, archetypes = List.map updateArchetype model.archetypes }
+
+                _ ->
+                    model ! []
 
         Mdl materialMsg ->
             Material.update materialMsg model
