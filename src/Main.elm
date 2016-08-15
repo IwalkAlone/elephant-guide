@@ -31,19 +31,13 @@ type Msg
     | NoOp
 
 
-initialModel : Model
-initialModel =
-    { deck = Deck.initialModel
-    }
-
-
 init : Never -> ( Model, Cmd Msg )
 init flags =
-    ( initialModel, Task.perform GetDeckError GetDeckFromServer getDeck )
-
-
-
---( initialModel, Cmd.none )
+    let
+        ( deck, cmd ) =
+            Deck.init
+    in
+        { deck = deck } ! [ Cmd.map DeckMsg cmd, Task.perform GetDeckError GetDeckFromServer getDeck ]
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )

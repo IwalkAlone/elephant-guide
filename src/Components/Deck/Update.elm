@@ -13,6 +13,7 @@ import Json.Decode as JD
 import Http
 import TableMetrics exposing (..)
 import Slot exposing (..)
+import Material exposing (init, subscriptions)
 
 
 type DecklistKind
@@ -26,6 +27,7 @@ type Msg
     | AddCard
     | DeleteCard ID
     | EditSlot DecklistKind ID Int
+    | SelectTab Int
     | DragStart Int
     | DragMove Mouse.Position
     | DragEnd Mouse.Position
@@ -36,7 +38,13 @@ type Msg
     | ArchetypeSlotFinishEditing Slot
     | ArchetypeMsg ID Archetype.Msg
     | CardMsg ID Card.Msg
+    | Mdl (Material.Msg Msg)
     | NoOp
+
+
+init : ( Model, Cmd Msg )
+init =
+    ( initialModel, Material.init Mdl )
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -80,6 +88,9 @@ update msg model =
                             { model | sideboard = Dict.insert cardId newValue model.sideboard }
             in
                 withSave newModel
+
+        SelectTab index ->
+            { model | tab = index } ! []
 
         ArchetypeMsg id msg ->
             let
@@ -167,6 +178,9 @@ update msg model =
                     in
                         withSave { model | slotEdit = Nothing, archetypes = List.map updateArchetype model.archetypes }
 
+        Mdl materialMsg ->
+            Material.update materialMsg model
+
         NoOp ->
             model ! []
 
@@ -213,9 +227,12 @@ postDeck model =
 
 subscriptions : Model -> Sub Msg
 subscriptions model =
-    case model.tableMetrics of
-        Nothing ->
-            Ports.receiveTableMetrics ReceivedTableMetrics
+    Sub.batch
+        [ Material.subscriptions Mdl model
+        , case model.tableMetrics of
+            Nothing ->
+                Ports.receiveTableMetrics ReceivedTableMetrics
 
-        Just _ ->
-            Sub.batch ([ Mouse.moves DragMove, Mouse.ups DragEnd ])
+            Just _ ->
+                Sub.batch ([ Mouse.moves DragMove, Mouse.ups DragEnd ])
+        ]

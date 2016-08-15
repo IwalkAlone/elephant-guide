@@ -16,14 +16,61 @@ import String
 import ToFixed exposing (toFixed)
 import DomManipulation exposing (..)
 import Slot exposing (..)
+import Material.Layout as Layout exposing (render, row, title)
+import Material.Tabs as Tabs exposing (render, ripple, onSelectTab, activeTab, textLabel)
+
+
+--import Material.Table as Table exposing (table, thead, tbody, tr, th, td)
 
 
 view : Model -> Html Msg
 view model =
-    div []
-        (keyedTable [] ([ ( "$Header", viewHeader model ) ] ++ viewLines model ++ [ ( "$AddCard", viewAddCard ) ])
-            :: (List.map (\archetype -> viewSideboardPlans model archetype) model.archetypes)
-        )
+    let
+        elephant =
+            div []
+                [ keyedTable [] ([ ( "$Header", viewHeader model ) ] ++ viewLines model ++ [ ( "$AddCard", viewAddCard ) ]) ]
+
+        sideboardPlans =
+            List.map (\archetype -> viewSideboardPlans model archetype) model.archetypes
+    in
+        Layout.render Mdl
+            model.mdl
+            []
+            { header =
+                [ Layout.row []
+                    [ Layout.title [] [ text "Elephant Guide" ]
+                    ]
+                ]
+            , drawer =
+                [ Layout.title [] [ text "Menu" ]
+                , Layout.navigation []
+                    [ Layout.link [] [ a [] [ text "New Deck" ] ]
+                    , hr [] []
+                    , Layout.link [] [ a [] [ text "Faeries" ] ]
+                    , Layout.link [] [ a [] [ text "BG Delirium" ] ]
+                    ]
+                ]
+            , tabs = ( [], [] )
+            , main =
+                [ Tabs.render Mdl
+                    [ 0 ]
+                    model.mdl
+                    [ Tabs.ripple
+                    , Tabs.onSelectTab SelectTab
+                    , Tabs.activeTab model.tab
+                    ]
+                    [ Tabs.textLabel [] "Elephant"
+                    , Tabs.textLabel [] "Plan preview"
+                    ]
+                    (case model.tab of
+                        0 ->
+                            [ elephant ]
+
+                        _ ->
+                            sideboardPlans
+                    )
+                ]
+            }
 
 
 viewHeader : Model -> Html Msg

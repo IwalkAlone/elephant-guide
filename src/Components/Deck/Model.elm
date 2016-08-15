@@ -10,6 +10,7 @@ import Json.Decode as JD exposing (..)
 import Json.Decode.Pipeline exposing (required, hardcoded, decode)
 import TableMetrics exposing (..)
 import Slot exposing (..)
+import Material exposing (Model, model)
 
 
 type alias Model =
@@ -21,6 +22,8 @@ type alias Model =
     , tableMetrics : Maybe TableMetrics
     , dragState : DragState
     , slotEdit : Maybe SlotEdit
+    , tab : Int
+    , mdl : Material.Model
     }
 
 
@@ -45,6 +48,8 @@ initialModel =
     , tableMetrics = Nothing
     , dragState = NotDragging
     , slotEdit = Nothing
+    , tab = 0
+    , mdl = Material.model
     }
 
 
@@ -70,3 +75,5 @@ decoder =
         |> hardcoded Nothing
         |> hardcoded NotDragging
         |> hardcoded Nothing
+        |> hardcoded 0
+        |> hardcoded Material.model
