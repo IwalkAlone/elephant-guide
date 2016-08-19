@@ -17,6 +17,7 @@ import ToFixed exposing (toFixed)
 import DomManipulation exposing (..)
 import Slot exposing (..)
 import Material.Layout as Layout
+import Material.Button as Button
 import Material.Icon as Icon
 
 
@@ -100,19 +101,23 @@ viewLine model index card =
         ( "$Card" ++ card.name
         , tr
             [ classList classes ]
-            (viewCard model card index
-                :: viewMaindeckSideboard model card.id
-                :: List.map
+            ([ viewCard model card index ]
+                ++ viewMaindeckSideboard model card.id
+                ++ List.map
                     (\archetype ->
-                        cell
-                            (archetypeSlotInput
+                        td
+                            [ onMouseEnter (Hover (Just archetype.id))
+                            , onMouseLeave (Hover Nothing)
+                            , classList [ ( "highlighted", model.hoverColumn == Just archetype.id ) ]
+                            ]
+                            [ archetypeSlotInput
                                 (Slot card.id archetype.id)
                                 (currentSlotDisplayValue model archetype card.id)
                                 (Archetype.slotDisplayValue archetype card.id)
                                 (targetId
                                     (MatchupInput (Slot card.id archetype.id))
                                 )
-                            )
+                            ]
                     )
                     model.archetypes
             )
@@ -136,23 +141,31 @@ currentSlotDisplayValue model archetype cardId =
                 displayValue
 
 
-viewMaindeckSideboard : Model -> ID -> Html Msg
+viewMaindeckSideboard : Model -> ID -> List (Html Msg)
 viewMaindeckSideboard model cardId =
-    td
-        [ classList
-            [ ( "maindeck-sideboard-cell", True )
-            , ( "maindeck-sideboard-cell-invalid", not (slotsFulfilledByMaindeckSideboard model cardId) )
-            ]
-        , colspan 2
+    let
+        cell contents =
+            td
+                [ classList
+                    [ ( "maindeck-sideboard-cell", True )
+                    , ( "maindeck-sideboard-cell-invalid", not (slotsFulfilledByMaindeckSideboard model cardId) )
+                    ]
+                ]
+                contents
+    in
+        [ cell
+            [ slotInput (Decklist.slotValue model.maindeck cardId) (EditSlot Maindeck cardId) (targetId (MaindeckInput cardId)) ]
+        , cell
+            [ slotInput (Decklist.slotValue model.sideboard cardId) (EditSlot Sideboard cardId) (targetId (SideboardInput cardId)) ]
         ]
-        [ slotInput (Decklist.slotValue model.maindeck cardId) (EditSlot Maindeck cardId) (targetId (MaindeckInput cardId))
-        , div [ class "maindeck-sideboard-estimated" ]
-            [ div [] [ text (recommendedMaindeckCountOfCard model cardId |> toFixed 2) ]
-            , hr [] []
-            , div [] [ text (toString (maxCountOfCard model cardId)) ]
-            ]
-        , slotInput (Decklist.slotValue model.sideboard cardId) (EditSlot Sideboard cardId) (targetId (SideboardInput cardId))
-        ]
+
+
+
+-- , div [ class "maindeck-sideboard-estimated" ]
+--     [ div [] [ text (recommendedMaindeckCountOfCard model cardId |> toFixed 2) ]
+--     , hr [] []
+--     , div [] [ text (toString (maxCountOfCard model cardId)) ]
+--     ]
 
 
 slotsFulfilledByMaindeckSideboard : Model -> ID -> Bool
@@ -219,8 +232,8 @@ viewCard model card index =
                         []
                    )
             )
-            [ div [ onClick (DeleteCard card.id) ] [ Icon.i "delete" ]
-            , div [ onClick (EditCardName card.id card.name) ] [ Icon.i "create" ]
+            [ Button.render Mdl [ 1, card.id ] model.mdl [ Button.icon, Button.onClick (DeleteCard card.id) ] [ Icon.view "delete" [ Icon.size18 ] ]
+            , Button.render Mdl [ 2, card.id ] model.mdl [ Button.icon, Button.onClick (EditCardName card.id card.name) ] [ Icon.view "create" [ Icon.size18 ] ]
             , div [ class "card" ]
                 [ if editingThisCard then
                     cardNameInput
@@ -233,7 +246,7 @@ viewCard model card index =
 
 viewAddArchetype : Html Msg
 viewAddArchetype =
-    cell (button [ onClick AddArchetype ] [ text "+ Add Archetype" ])
+    td [] [ button [ onClick AddArchetype ] [ text "+ Add Archetype" ] ]
 
 
 viewArchetype : Model -> Archetype.Model -> Html Msg
@@ -242,10 +255,9 @@ viewArchetype model archetype =
         cardCountElements =
             List.map (\decklist -> viewCardCount (Decklist.cardCount decklist) 60) (Archetype.decklists archetype)
     in
-        (td [ class "archetype-cell" ]
+        (td [ classList [ ( "archetype-cell", True ), ( "highlighted", model.hoverColumn == Just archetype.id ) ] ]
             [ div [] [ Html.map (ArchetypeMsg archetype.id) (Archetype.viewName archetype) ]
             , div [] ((Html.map (ArchetypeMsg archetype.id) (Archetype.viewWeight archetype)) :: cardCountElements)
-            , div [] [ a [ href ("#" ++ targetId (ArchetypeSideboardPlanAnchor archetype.id)) ] [ text "Preview" ] ]
             ]
         )
 
@@ -269,12 +281,7 @@ viewCardCount count targetCount =
 
 viewAddCard : Html Msg
 viewAddCard =
-    tr [] [ cell (button [ onClick AddCard ] [ text "+ Add Card" ]) ]
-
-
-cell : Html msg -> Html msg
-cell html =
-    td [] [ html ]
+    tr [] [ td [] [ button [ onClick AddCard ] [ text "+ Add Card" ] ] ]
 
 
 slotInput : Int -> (Int -> Msg) -> String -> Html Msg

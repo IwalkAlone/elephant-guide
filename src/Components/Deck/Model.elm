@@ -11,6 +11,7 @@ import Json.Decode.Pipeline exposing (required, hardcoded, decode)
 import TableMetrics exposing (..)
 import Slot exposing (..)
 import Material exposing (Model, model)
+import Material.Layout
 
 
 type alias Model =
@@ -22,6 +23,7 @@ type alias Model =
     , tableMetrics : Maybe TableMetrics
     , dragState : DragState
     , editState : EditState
+    , hoverColumn : Maybe Int
     , tab : Int
     , mdl : Material.Model
     }
@@ -48,9 +50,15 @@ initialModel =
     , tableMetrics = Nothing
     , dragState = NotDragging
     , editState = NotEditing
+    , hoverColumn = Nothing
     , tab = 0
-    , mdl = Material.model
+    , mdl = materialModel
     }
+
+
+materialModel : Material.Model
+materialModel =
+    Material.Layout.setTabsWidth 1000 Material.model
 
 
 encoder : Model -> JE.Value
@@ -64,6 +72,10 @@ encoder model =
         ]
 
 
+
+--figured it out, it was my fault of course :) I was receiving a new model from the server after starting the app and the decoder
+
+
 decoder : Decoder Model
 decoder =
     decode Model
@@ -75,5 +87,6 @@ decoder =
         |> hardcoded Nothing
         |> hardcoded NotDragging
         |> hardcoded NotEditing
+        |> hardcoded Nothing
         |> hardcoded 0
-        |> hardcoded Material.model
+        |> hardcoded materialModel

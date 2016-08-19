@@ -37,6 +37,7 @@ type Msg
     | FocusAndSelect String
     | EditArchetypeSlot Slot String
     | CommitArchetypeSlot
+    | Hover (Maybe ID)
     | ArchetypeMsg ID Archetype.Msg
     | Mdl (Material.Msg Msg)
     | NoOp
@@ -178,6 +179,9 @@ update msg model =
 
                 _ ->
                     model ! []
+
+        Hover maybeArchetypeId ->
+            { model | hoverColumn = maybeArchetypeId } ! []
 
         Mdl materialMsg ->
             Material.update materialMsg model

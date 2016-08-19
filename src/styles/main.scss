@@ -1,4 +1,5 @@
 table {
+    font-family: "Roboto","Helvetica","Arial",sans-serif;
     border: 1px solid black;
     box-sizing: border-box;
     border-collapse: collapse;
@@ -9,28 +10,55 @@ table {
     input,
     td {
         width: 80px;
-        font-size: 18px;
+        font-size: 14px;
         text-align: center;
+        line-height: 16px;
+        position: relative;
+        background-color: inherit;
+    }
+    tr:nth-child(2n+1) {
+        background-color: #eeeeee;
+    }
+    tr:hover {
+        background-color: #ccc;
     }
 }
 input {
     border: none;
+    font-family: "Roboto","Helvetica","Arial",sans-serif;
 }
 .card-cell {
     width: 250px;
+    text-align: right;
+    padding: 0 10px 0 10px;
+    line-height: 24px;
     input {
-        text-align: left;
+        text-align: right;
         width: 160px;
     }
     div {
       display: inline-block;
       margin-left: 10px;
     }
+
+    button {
+        display: none;
+        float: left;
+
+        &:first-child {
+            margin-left: 20px;
+        }
+    }
+
+    &:hover button {
+        display: inline-block;
+    }
 }
 .archetype-cell {
     width: 80px;
     text-align: left;
     font-size: 12px;
+    line-height: 16px;
     input {
         font-size: 12px;
         width: 100%;
@@ -83,10 +111,21 @@ input {
   border-bottom: 3px solid gray;
 }
 .dragging {
-    background-color: lightgray;
+    background-color: #ccc;
 }
 
 .separate-sideboard-plans-for-play-draw div {
     display: inline-block;
     vertical-align: top;
+}
+
+
+.highlighted {
+    background-color: #ccc;
+}
+
+.mdl-button--icon {
+    width: 24px;
+    min-width: 24px;
+    height: 24px;
 }

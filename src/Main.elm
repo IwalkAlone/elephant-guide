@@ -11,7 +11,6 @@ import Json.Decode as JD exposing (..)
 import Json.Encode as JE exposing (..)
 import Task exposing (Task)
 import Ports
-import Material.Layout
 
 
 main : Program Never
@@ -38,7 +37,7 @@ init flags =
         ( deck, cmd ) =
             Deck.init
     in
-        { deck = { deck | mdl = Material.Layout.setTabsWidth 300 deck.mdl } }
+        { deck = deck }
             ! [ Cmd.map DeckMsg cmd, Task.perform GetDeckError GetDeckFromServer getDeck ]
 
 
@@ -58,7 +57,11 @@ update msg model =
                         model ! [ Task.perform GetDeckError GetDeckFromServer getDeck ]
 
         GetDeckFromServer deck ->
-            { model | deck = deck } ! []
+            let
+                ( _, cmd ) =
+                    Deck.init
+            in
+                { model | deck = deck } ! [ Cmd.map DeckMsg cmd ]
 
         GetDeckError error ->
             let
