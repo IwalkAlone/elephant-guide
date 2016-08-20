@@ -1,7 +1,5 @@
 table {
     font-family: "Roboto","Helvetica","Arial",sans-serif;
-    border: 1px solid black;
-    box-sizing: border-box;
     border-collapse: collapse;
     user-select: none;
     td {
@@ -13,10 +11,9 @@ table {
         font-size: 14px;
         text-align: center;
         line-height: 16px;
-        position: relative;
         background-color: inherit;
     }
-    tr:nth-child(2n+1) {
+    tr:nth-child(2n) {
         background-color: #eeeeee;
     }
     tr:hover {
@@ -25,7 +22,7 @@ table {
 }
 input {
     border: none;
-    font-family: "Roboto","Helvetica","Arial",sans-serif;
+    font-family: inherit;
 }
 .card-cell {
     width: 250px;

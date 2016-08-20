@@ -38,6 +38,7 @@ type Msg
     | EditArchetypeSlot Slot String
     | CommitArchetypeSlot
     | Hover (Maybe ID)
+    | SetAddCardValue String
     | ArchetypeMsg ID Archetype.Msg
     | Mdl (Material.Msg Msg)
     | NoOp
@@ -67,7 +68,8 @@ update msg model =
         AddCard ->
             withSave
                 { model
-                    | cards = model.cards ++ [ Card.Model model.nextId "New Card" ]
+                    | cards = model.cards ++ [ Card.Model model.nextId model.addCardValue ]
+                    , addCardValue = ""
                     , nextId = model.nextId + 1
                 }
 
@@ -182,6 +184,9 @@ update msg model =
 
         Hover maybeArchetypeId ->
             { model | hoverColumn = maybeArchetypeId } ! []
+
+        SetAddCardValue value ->
+            { model | addCardValue = value } ! []
 
         Mdl materialMsg ->
             Material.update materialMsg model

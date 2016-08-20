@@ -7,6 +7,7 @@ import Components.Card as Card
 import Components.Decklist as Decklist exposing (..)
 import Components.SideboardPlan exposing (..)
 import ID exposing (..)
+import Json.Decode as JD
 import Html exposing (..)
 import Html.App as Html
 import Html.Attributes exposing (..)
@@ -26,7 +27,7 @@ view model =
     let
         elephant =
             div []
-                [ keyedTable [] ([ ( "$Header", viewHeader model ) ] ++ viewLines model ++ [ ( "$AddCard", viewAddCard ) ]) ]
+                [ keyedTable [] ([ ( "$Header", viewHeader model ) ] ++ viewLines model ++ [ ( "$AddCard", viewAddCard model.addCardValue ) ]) ]
 
         sideboardPlans =
             List.map (\archetype -> viewSideboardPlans model archetype) model.archetypes
@@ -279,9 +280,28 @@ viewCardCount count targetCount =
     span [ classList [ ( "count-over", count > targetCount ), ( "count-under", count < targetCount ) ] ] [ text (toString count ++ "/" ++ toString targetCount) ]
 
 
-viewAddCard : Html Msg
-viewAddCard =
-    tr [] [ td [] [ button [ onClick AddCard ] [ text "+ Add Card" ] ] ]
+viewAddCard : String -> Html Msg
+viewAddCard currentValue =
+    tr [] [ td [ class "card-cell" ] [ input [ value currentValue, onInput SetAddCardValue, onEnterDown AddCard, placeholder "Add new card..." ] [ text "+ Add Card" ] ] ]
+
+
+onEnterDown : Msg -> Attribute Msg
+onEnterDown msg =
+    let
+        keyMapper code =
+            case code of
+                13 ->
+                    AddCard
+
+                _ ->
+                    NoOp
+    in
+        onKeyDown keyMapper
+
+
+onKeyDown : (Int -> msg) -> Attribute msg
+onKeyDown tagger =
+    on "keydown" (JD.map tagger keyCode)
 
 
 slotInput : Int -> (Int -> Msg) -> String -> Html Msg

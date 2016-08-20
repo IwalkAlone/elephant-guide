@@ -23,6 +23,7 @@ type alias Model =
     , tableMetrics : Maybe TableMetrics
     , dragState : DragState
     , editState : EditState
+    , addCardValue : String
     , hoverColumn : Maybe Int
     , tab : Int
     , mdl : Material.Model
@@ -50,6 +51,7 @@ initialModel =
     , tableMetrics = Nothing
     , dragState = NotDragging
     , editState = NotEditing
+    , addCardValue = ""
     , hoverColumn = Nothing
     , tab = 0
     , mdl = materialModel
@@ -87,6 +89,7 @@ decoder =
         |> hardcoded Nothing
         |> hardcoded NotDragging
         |> hardcoded NotEditing
+        |> hardcoded ""
         |> hardcoded Nothing
         |> hardcoded 0
         |> hardcoded materialModel
