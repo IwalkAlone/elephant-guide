@@ -96,6 +96,8 @@ update msg model =
             withSave
                 { model
                     | cards = List.filter (\card -> card.id /= cardId) model.cards
+                    , maindeck = Dict.remove cardId model.maindeck
+                    , sideboard = Dict.remove cardId model.sideboard
                     , archetypes = List.map (Archetype.deleteCard cardId) model.archetypes
                 }
 
