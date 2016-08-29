@@ -3,6 +3,7 @@ module Components.Deck.Update exposing (..)
 import Components.Deck.Model as Model exposing (..)
 import Components.Archetype as Archetype
 import Components.Card as Card
+import DomManipulation
 import ID exposing (..)
 import Dict
 import Ports
@@ -34,7 +35,7 @@ type Msg
     | DragMove Mouse.Position
     | DragEnd Mouse.Position
     | ReceivedTableMetrics TableMetrics
-    | FocusAndSelect String
+    | SelectText String
     | EditArchetypeSlot Slot String
     | CommitArchetypeSlot
     | Hover (Maybe ID)
@@ -74,7 +75,7 @@ update msg model =
                 }
 
         EditCardName cardId input ->
-            { model | editState = EditingCardName cardId input } ! []
+            { model | editState = EditingCardName cardId input } ! [ Ports.focus (DomManipulation.targetId (DomManipulation.CardNameInput cardId)) ]
 
         CommitCardName ->
             case model.editState of
@@ -163,8 +164,8 @@ update msg model =
                 Dragging fromIndex toIndex ->
                     { model | cards = splice1 fromIndex toIndex model.cards, tableMetrics = Nothing, dragState = NotDragging } ! []
 
-        FocusAndSelect elementId ->
-            model ! [ Ports.focusAndSelect elementId ]
+        SelectText elementId ->
+            model ! [ Ports.selectText elementId ]
 
         EditArchetypeSlot slot input ->
             { model | editState = EditingArchetypeSlot slot input } ! []

@@ -16,7 +16,7 @@ table {
     tr:nth-child(2n) {
         background-color: #eeeeee;
     }
-    tr:hover {
+    tr:hover, tr.dragging {
         background-color: #ccc;
     }
 }
@@ -107,15 +107,11 @@ input {
 .drop-target-below {
   border-bottom: 3px solid gray;
 }
-.dragging {
-    background-color: #ccc;
-}
 
 .separate-sideboard-plans-for-play-draw div {
     display: inline-block;
     vertical-align: top;
 }
-
 
 .highlighted {
     background-color: #ccc;

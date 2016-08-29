@@ -20,19 +20,31 @@ localForage.getItem('deck', function (err, value) {
 });
 
 app.ports.requestTableMetrics.subscribe(function () {
-  var tableTop = document.querySelector('table').offsetTop;
-  var rowBottoms = Array.prototype.map.call(document.querySelectorAll('tr'), function (tr) {return tr.offsetTop + tr.offsetHeight;})
-  app.ports.receiveTableMetrics.send({
-    tableTop: tableTop,
-    rowBottoms: rowBottoms
-  })
+  var rowBottoms = Array.prototype.map.call(document.querySelectorAll('tr'), function (tr) {
+    return tr.getBoundingClientRect().bottom;
+  });
+  app.ports.receiveTableMetrics.send({rowBottoms: rowBottoms});
 })
 
-app.ports.focusAndSelect.subscribe(function (id) {
-  var element = document.getElementById(id);
-  if (!element) {
-    console.error("Could not find element by ID: " + id);
-  }
-  element.focus();
-  element.select();
-})
+app.ports.focus.subscribe(function (id) {
+  applyToElement(id, function (element) {
+    element.focus();
+  });
+});
+
+app.ports.selectText.subscribe(function (id) {
+  applyToElement(id, function (element) {
+    element.select();
+  });
+});
+
+function applyToElement(id, callback) {
+  requestAnimationFrame(function () {
+    var element = document.getElementById(id);
+    if (!element) {
+      console.error("Could not find element by ID: " + id);
+      return;
+    }
+    callback(element);
+  });
+}

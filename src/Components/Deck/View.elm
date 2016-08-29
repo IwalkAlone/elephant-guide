@@ -220,7 +220,7 @@ viewCard model card index =
                     False
 
         cardNameInput =
-            input [ class "card-name", type' "text", defaultValue card.name, onInput (EditCardName card.id), onBlur CommitCardName ] []
+            input [ class "card-name", type' "text", defaultValue card.name, id (targetId (CardNameInput card.id)), onInput (EditCardName card.id), onBlur CommitCardName ] []
 
         cardNameSpan =
             span [ class "card-name" ] [ text card.name ]
@@ -319,7 +319,7 @@ slotInput currentValue saveCountMsg elementId =
             [ type' "number"
             , value viewValue
             , onInput (\input -> saveCountMsg (Result.withDefault 0 (String.toInt input)))
-            , onClick (FocusAndSelect elementId)
+            , onClick (SelectText elementId)
             , id elementId
             ]
             []
@@ -332,7 +332,7 @@ archetypeSlotInput slot currentValue initialEditValue elementId =
         , onFocus (EditArchetypeSlot slot initialEditValue)
         , onInput (EditArchetypeSlot slot)
         , onBlur (CommitArchetypeSlot)
-        , onClick (FocusAndSelect elementId)
+        , onClick (SelectText elementId)
         , value currentValue
         , id elementId
         ]

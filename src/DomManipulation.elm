@@ -1,6 +1,5 @@
 module DomManipulation exposing (..)
 
-import Ports exposing (focusAndSelect)
 import ID exposing (ID)
 import Slot exposing (..)
 
@@ -8,6 +7,7 @@ import Slot exposing (..)
 type Element
     = MaindeckInput ID
     | SideboardInput ID
+    | CardNameInput ID
     | MatchupInput Slot
     | ArchetypeSideboardPlanAnchor ID
 
@@ -21,13 +21,11 @@ targetId element =
         SideboardInput cardId ->
             "sideboard-input-for-card-" ++ toString cardId
 
+        CardNameInput cardId ->
+            "card-name-input" ++ toString cardId
+
         MatchupInput { cardId, archetypeId } ->
             "maindeck-input-for-card-" ++ toString cardId ++ "-archetype-" ++ toString archetypeId
 
         ArchetypeSideboardPlanAnchor archetypeId ->
             "sideboard-plan-" ++ toString archetypeId
-
-
-focusAndSelect : Element -> Cmd msg
-focusAndSelect element =
-    Ports.focusAndSelect (targetId element)
