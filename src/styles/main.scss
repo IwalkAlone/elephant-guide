@@ -101,6 +101,27 @@ input {
     }
 }
 
+.sideboard-plan-grid {
+  padding: 1em;
+  display: flex;
+  flex-flow: row wrap;
+
+  > div {
+    margin: 1em;
+    flex-grow: 1.5;
+  }
+
+  ul {
+    list-style-type: none;
+  }
+
+  .mdl-card__supporting-text {
+    color: black;
+    font-size: 16px;
+  }
+}
+
+
 .drop-target-above {
   border-top: 3px solid gray;
 }

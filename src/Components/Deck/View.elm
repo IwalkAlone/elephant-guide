@@ -58,7 +58,7 @@ view model =
                         [ elephant ]
 
                     _ ->
-                        sideboardPlans
+                        [ div [ class "sideboard-plan-grid" ] sideboardPlans ]
             }
 
 

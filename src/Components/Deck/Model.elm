@@ -74,10 +74,6 @@ encoder model =
         ]
 
 
-
---figured it out, it was my fault of course :) I was receiving a new model from the server after starting the app and the decoder
-
-
 decoder : Decoder Model
 decoder =
     decode Model
