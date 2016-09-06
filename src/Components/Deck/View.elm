@@ -5,6 +5,7 @@ import Components.Deck.Update as Update exposing (..)
 import Components.Archetype as Archetype
 import Components.Card as Card
 import Components.Decklist as Decklist exposing (..)
+import Components.DeckSettings as DeckSettings
 import Components.SideboardPlan exposing (..)
 import ID exposing (..)
 import Json.Decode as JD
@@ -51,14 +52,17 @@ view model =
                     , Layout.link [] [ a [] [ text "BG Delirium" ] ]
                     ]
                 ]
-            , tabs = ( [ text "Elephant", text "Plan preview" ], [] )
+            , tabs = ( [ text "Elephant", text "Plan preview", text "Settings" ], [] )
             , main =
                 case model.tab of
                     0 ->
                         [ elephant ]
 
-                    _ ->
+                    1 ->
                         [ div [ class "sideboard-plan-grid" ] sideboardPlans ]
+
+                    _ ->
+                        [ DeckSettings.view model ]
             }
 
 

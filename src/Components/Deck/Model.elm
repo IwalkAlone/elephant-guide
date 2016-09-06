@@ -19,6 +19,9 @@ type alias Model =
     , cards : List Card.Model
     , maindeck : Decklist
     , sideboard : Decklist
+    , name : String
+    , notes : String
+    , targetSize : Int
     , nextId : ID
     , tableMetrics : Maybe TableMetrics
     , dragState : DragState
@@ -45,6 +48,9 @@ initialModel : Model
 initialModel =
     { archetypes = []
     , cards = []
+    , name = "Unnamed deck"
+    , notes = ""
+    , targetSize = 60
     , maindeck = Dict.empty
     , sideboard = Dict.empty
     , nextId = 1
@@ -68,9 +74,12 @@ encoder model =
     JE.object
         [ ( "archetypes", JE.list (List.map Archetype.encoder model.archetypes) )
         , ( "cards", JE.list (List.map Card.encoder model.cards) )
-        , ( "nextId", JE.int model.nextId )
         , ( "maindeck", Decklist.encoder model.maindeck )
         , ( "sideboard", Decklist.encoder model.sideboard )
+        , ( "name", JE.string model.name )
+        , ( "notes", JE.string model.notes )
+        , ( "targetSize", JE.int model.targetSize )
+        , ( "nextId", JE.int model.nextId )
         ]
 
 
@@ -81,6 +90,9 @@ decoder =
         |> required "cards" (JD.list Card.decoder)
         |> required "maindeck" Decklist.decoder
         |> required "sideboard" Decklist.decoder
+        |> required "name" JD.string
+        |> required "notes" JD.string
+        |> required "targetSize" JD.int
         |> required "nextId" JD.int
         |> hardcoded Nothing
         |> hardcoded NotDragging
