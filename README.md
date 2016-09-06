@@ -1,69 +1,19 @@
-# elm-webpack-starter
+# Elephant Guide
 
-A simple Webpack setup for writing [Elm](http://elm-lang.org/) apps:
+A Magic: the Gathering deck tuning tool implementing the [Elephant Method](http://www.starcitygames.com/article/26317_The-Elephant-Method-A-Case-Study.html) (Building a 60-card post-sideboard decklist for each expected matchup, then deciding which specific cards go in the maindeck and which go in the sideboard). People usually do this with Google Sheets or similar, but my tool has special features that are hard to do in a general-purpose spreadsheet.
 
-* Dev server with live reloading, HMR
-* Support for CSS/SCSS (with Autoprefixer), image assets
-* Bootstrap 3.3+ (Sass version)
-* Bundling and minification for deployment
-* Basic app scaffold, using `Html.App`
-* A snippet of example code to get you started!
+Still under development, but I already qualified for the Pro Tour using it! :P
 
+Current features:
 
-### Install:
+* Spreadsheet with automatic validation
+* Supports different card counts while on the play/draw
+* Preview your sideboard plans after filling out the spreadsheet
+
+### Run it locally:
+You'll need node.js and the Elm runtime.
 ```
-git clone https://github.com/moarwick/elm-webpack-starter
-cd elm-webpack-starter
 npm install
-```
-
-If you haven't done so yet, install Elm globally:
-```
-npm install -g elm
-```
-
-Install Elm's dependencies:
-```
-elm package install
-```
-
-### Serve locally:
-```
+elm-package install
 npm start
 ```
-* Access app at `http://localhost:8080/`
-* Get coding! The entry point file is `src/Main.elm`
-* Browser will refresh automatically on any file changes..
-
-
-### Build & bundle for prod:
-```
-npm run build
-```
-
-* Files are saved into the `/dist` folder
-* To check it, open `dist/index.html`
-* To publish the `/dist` folder to your own GitHub repo's `gh-pages`, commit any changes, then:
-```
-git subtree push --prefix dist origin gh-pages
-open http://<your-github-account>.github.io/elm-webpack-starter/
-```
-
-### Changelog
-**Ver 0.3.0**
-* Update to latest NPM module versions
-* Use *html-webpack-plugin* to generate *index.html*
-* Unique hash filenames for bundled JS and CSS (prevents caching)
-* Image and favicon assets getting copied to *dist/*
-
-**Ver 0.4.0**
-* Add [elm-hot-loader](https://github.com/fluxxu/elm-hot-loader) for HMR support (PR by [fluxxu](https://github.com/fluxxu))
-
-**Ver 0.5.0**
-* Update to Elm 0.17.0 (and other latest modules)
-* Upgrade starter code per [upgrade-docs](https://github.com/elm-lang/elm-platform/blob/master/upgrade-docs/0.17.md)
-* Remove `elm-hot-loader` (for now)
-
-**Ver 0.6.0**
-* `elm-hot-loader` is back (no Elm code changes required!)
-* Switch to [bootstrap-sass](https://www.npmjs.com/package/bootstrap-sass) to demo CSS
