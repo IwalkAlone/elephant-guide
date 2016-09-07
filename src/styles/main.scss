@@ -3,7 +3,7 @@ table {
     border-collapse: collapse;
     user-select: none;
     td {
-        border: 1px solid black;
+        border: 1px solid #bbb;
     }
     input,
     td {
@@ -14,10 +14,10 @@ table {
         background-color: inherit;
     }
     tr:nth-child(2n) {
-        background-color: #eeeeee;
+        background-color: #f7f7f7;
     }
     tr:hover, tr.dragging {
-        background-color: #ccc;
+        background-color: #ddd;
     }
 }
 input {
@@ -148,7 +148,7 @@ input {
 }
 
 .highlighted {
-    background-color: #ccc;
+    background-color: #ddd;
 }
 
 .mdl-button--icon {
