@@ -1,8 +1,5 @@
 module Components.Card exposing (..)
 
-import Html exposing (..)
-import Html.Attributes exposing (class, type', defaultValue)
-import Html.Events exposing (..)
 import Json.Encode as JE exposing (..)
 import Json.Decode as JD exposing (..)
 import Json.Decode.Pipeline exposing (required, hardcoded, decode)

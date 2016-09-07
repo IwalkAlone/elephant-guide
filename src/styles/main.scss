@@ -121,6 +121,19 @@ input {
   }
 }
 
+.deck-settings {
+    padding: 2em;
+
+    .mdl-textfield {
+        display: block;
+        width: 500px;
+    }
+
+}
+
+.mdl-textfield__label {
+    color: rgba(0,0,0,0.4);
+}
 
 .drop-target-above {
   border-top: 3px solid gray;

@@ -31,6 +31,9 @@ type Msg
     | DeleteCard ID
     | EditSlot DecklistKind ID Int
     | SelectTab Int
+    | EditDeckName String
+    | EditNotes String
+    | EditTargetSize Int
     | DragStart Int
     | DragMove Mouse.Position
     | DragEnd Mouse.Position
@@ -116,6 +119,15 @@ update msg model =
 
         SelectTab index ->
             { model | tab = index } ! []
+
+        EditDeckName input ->
+            withSave { model | name = input }
+
+        EditNotes input ->
+            withSave { model | notes = input }
+
+        EditTargetSize size ->
+            withSave { model | targetSize = size }
 
         ArchetypeMsg id msg ->
             let

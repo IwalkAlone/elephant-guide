@@ -70,7 +70,7 @@ viewHeader : Model -> Html Msg
 viewHeader model =
     thead []
         (td [ class "card-cell" ] [ text ("Total Slots Used: " ++ toString (totalUsedSlots model)) ]
-            :: viewDecklistHeader model.maindeck "Main" 60
+            :: viewDecklistHeader model.maindeck "Main" model.targetSize
             :: viewDecklistHeader model.sideboard "Side" 15
             :: List.map (viewArchetype model) model.archetypes
             ++ [ viewAddArchetype ]
@@ -258,7 +258,7 @@ viewArchetype : Model -> Archetype.Model -> Html Msg
 viewArchetype model archetype =
     let
         cardCountElements =
-            List.map (\decklist -> viewCardCount (Decklist.cardCount decklist) 60) (Archetype.decklists archetype)
+            List.map (\decklist -> viewCardCount (Decklist.cardCount decklist) model.targetSize) (Archetype.decklists archetype)
     in
         (td [ classList [ ( "archetype-cell", True ), ( "highlighted", model.hoverColumn == Just archetype.id ) ] ]
             [ div [] [ Html.map (ArchetypeMsg archetype.id) (Archetype.viewName archetype) ]

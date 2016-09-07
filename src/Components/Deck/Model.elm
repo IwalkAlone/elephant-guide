@@ -48,7 +48,7 @@ initialModel : Model
 initialModel =
     { archetypes = []
     , cards = []
-    , name = "Unnamed deck"
+    , name = ""
     , notes = ""
     , targetSize = 60
     , maindeck = Dict.empty
