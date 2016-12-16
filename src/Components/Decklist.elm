@@ -42,7 +42,7 @@ encoder decklist =
 
 decoder : Decoder Decklist
 decoder =
-    JD.object2 (,) ("id" := JD.int) ("qty" := JD.int)
+    JD.map2 (,) (field "id" JD.int) (field "qty" JD.int)
         |> JD.list
         |> JD.map Dict.fromList
 

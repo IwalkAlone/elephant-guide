@@ -47,4 +47,14 @@ view { mdl, name, notes, targetSize } =
 
 onValidInput : (String -> Result String a) -> (a -> msg) -> Textfield.Property msg
 onValidInput validator msg =
-    Textfield.on "input" <| JD.map (msg) (JD.customDecoder Html.Events.targetValue validator)
+    Textfield.on "input" <| JD.map (msg) (Html.Events.targetValue |> JD.andThen (succeedIfValid validator))
+
+
+succeedIfValid : (String -> Result String a) -> String -> JD.Decoder a
+succeedIfValid validator string =
+    case validator string of
+        Ok validValue ->
+            JD.succeed validValue
+
+        Err _ ->
+            JD.fail "Invalid input"

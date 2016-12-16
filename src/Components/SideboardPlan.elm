@@ -52,7 +52,7 @@ sideboardPlan deck matchupList =
         deck.cards
             |> List.map (\card -> ( card.name, countById card.id ))
             |> List.filter (\( cardName, qty ) -> qty /= 0)
-            |> List.sortBy snd
+            |> List.sortBy Tuple.second
 
 
 displaySideboardPlanItem : ( String, Int ) -> String

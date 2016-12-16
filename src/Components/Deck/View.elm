@@ -10,7 +10,6 @@ import Components.SideboardPlan exposing (..)
 import ID exposing (..)
 import Json.Decode as JD
 import Html exposing (..)
-import Html.App as Html
 import Html.Attributes exposing (..)
 import Html.Events exposing (..)
 import Html.Keyed exposing (..)
@@ -224,7 +223,7 @@ viewCard model card index =
                     False
 
         cardNameInput =
-            input [ class "card-name", type' "text", defaultValue card.name, id (targetId (CardNameInput card.id)), onInput (EditCardName card.id), onBlur CommitCardName ] []
+            input [ class "card-name", type_ "text", defaultValue card.name, id (targetId (CardNameInput card.id)), onInput (EditCardName card.id), onBlur CommitCardName ] []
 
         cardNameSpan =
             span [ class "card-name" ] [ text card.name ]
@@ -320,7 +319,7 @@ slotInput currentValue saveCountMsg elementId =
                     toString value
     in
         input
-            [ type' "number"
+            [ type_ "number"
             , value viewValue
             , onInput (\input -> saveCountMsg (Result.withDefault 0 (String.toInt input)))
             , onClick (SelectText elementId)
@@ -332,7 +331,7 @@ slotInput currentValue saveCountMsg elementId =
 archetypeSlotInput : Slot -> String -> String -> String -> Html Msg
 archetypeSlotInput slot currentValue initialEditValue elementId =
     input
-        [ type' "text"
+        [ type_ "text"
         , onFocus (EditArchetypeSlot slot initialEditValue)
         , onInput (EditArchetypeSlot slot)
         , onBlur (CommitArchetypeSlot)

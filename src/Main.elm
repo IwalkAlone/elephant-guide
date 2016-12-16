@@ -1,7 +1,6 @@
 module Main exposing (..)
 
 import Html exposing (..)
-import Html.App as Html
 import Html.Lazy exposing (..)
 import Components.Deck.Model as Deck exposing (..)
 import Components.Deck.Update as Deck exposing (..)
@@ -9,13 +8,12 @@ import Components.Deck.View as Deck exposing (..)
 import Http
 import Json.Decode as JD exposing (..)
 import Json.Encode as JE exposing (..)
-import Task exposing (Task)
 import Ports
 
 
-main : Program Never
+main : Program Never Model Msg
 main =
-    Html.programWithFlags { init = init, view = view, update = update, subscriptions = subscriptions }
+    Html.program { init = init, view = view, update = update, subscriptions = subscriptions }
 
 
 type alias Model =
@@ -25,20 +23,19 @@ type alias Model =
 
 type Msg
     = LoadDeckFromLocalDb JE.Value
-    | GetDeckFromServer Deck.Model
-    | GetDeckError Http.Error
+    | GotDeck (Result Http.Error Deck.Model)
     | DeckMsg Deck.Msg
     | NoOp
 
 
-init : Never -> ( Model, Cmd Msg )
-init flags =
+init : ( Model, Cmd Msg )
+init =
     let
         ( deck, cmd ) =
             Deck.init
     in
         { deck = deck }
-            ! [ Cmd.map DeckMsg cmd, Task.perform GetDeckError GetDeckFromServer getDeck ]
+            ! [ Cmd.map DeckMsg cmd, Http.send GotDeck getDeck ]
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -54,16 +51,16 @@ update msg model =
                         { model | deck = loadedDeck } ! []
 
                     Err error ->
-                        model ! [ Task.perform GetDeckError GetDeckFromServer getDeck ]
+                        model ! [ Http.send GotDeck getDeck ]
 
-        GetDeckFromServer deck ->
+        GotDeck (Ok deck) ->
             let
                 ( _, cmd ) =
                     Deck.init
             in
                 { model | deck = deck } ! [ Cmd.map DeckMsg cmd ]
 
-        GetDeckError error ->
+        GotDeck (Err error) ->
             let
                 debug =
                     Debug.log "Error loading deck: " error
@@ -83,12 +80,12 @@ update msg model =
 
 view : Model -> Html Msg
 view model =
-    Html.map DeckMsg (lazy Deck.view model.deck)
+    Html.map DeckMsg (Html.Lazy.lazy Deck.view model.deck)
 
 
-getDeck : Task Http.Error Deck.Model
+getDeck : Http.Request Deck.Model
 getDeck =
-    Http.get Deck.decoder "http://localhost:3000/deck"
+    Http.get "http://localhost:3000/deck" Deck.decoder
 
 
 subscriptions : Model -> Sub Msg

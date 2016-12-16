@@ -242,12 +242,15 @@ splice1 fromIndex toIndex list =
 
 saveDeck : Model -> Cmd Msg
 saveDeck model =
-    Cmd.batch [ Task.perform (always NoOp) (always NoOp) (postDeck model), Ports.saveDeck (Model.encoder model) ]
+    Cmd.batch [ Http.send (always NoOp) (postDeck model), Ports.saveDeck (Model.encoder model) ]
 
 
-postDeck : Model -> Task Http.Error String
+postDeck : Model -> Http.Request String
 postDeck model =
-    Http.post JD.string "http://localhost:3000/save" (Model.encoder model |> (JE.encode 4) |> Http.string)
+    Http.post
+        "http://localhost:3000/save"
+        (Model.encoder model |> (JE.encode 4) |> Http.stringBody "application/json")
+        JD.string
 
 
 subscriptions : Model -> Sub Msg

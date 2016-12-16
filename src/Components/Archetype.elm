@@ -1,7 +1,7 @@
 module Components.Archetype exposing (..)
 
 import Html exposing (..)
-import Html.Attributes exposing (class, type', value)
+import Html.Attributes exposing (class, type_, value)
 import Html.Events exposing (..)
 import String exposing (toFloat)
 import Components.Decklist as Decklist exposing (..)
@@ -39,14 +39,14 @@ update msg model =
 
 viewName : Model -> Html Msg
 viewName model =
-    input [ class "archetype-name", type' "text", Html.Attributes.value model.name, onInput EditName ] []
+    input [ class "archetype-name", type_ "text", Html.Attributes.value model.name, onInput EditName ] []
 
 
 viewWeight : Model -> Html Msg
 viewWeight model =
     input
         [ class "archetype-weight"
-        , type' "number"
+        , type_ "number"
         , Html.Attributes.value (toString model.weight)
         , onInput (\input -> EditWeight (Result.withDefault 0 (String.toFloat input)))
         ]
